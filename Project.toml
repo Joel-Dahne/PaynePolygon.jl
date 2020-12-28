@@ -1,0 +1,4 @@
+name = "PaynePolygon"
+uuid = "76dc31ef-4ed8-4769-a31e-8dc1a775b6bb"
+authors = ["Joel Dahne <joel@dahne.eu>"]
+version = "0.1.0"
