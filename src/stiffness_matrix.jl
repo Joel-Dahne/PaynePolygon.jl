@@ -130,7 +130,43 @@ function edges_to_triangles(N::Integer = 36)
     return edge_to_triangle1, edge_to_triangle2
 end
 
-function stiffness_matrix(N::Integer = 36)
+function stiffness_matrix(N::Integer = 36; return_hermitian = true)
+    num_edges = div(3N^2 - N, 2)
     edge_to_triangle1, edge_to_triangle2 = edges_to_triangles(N)
-    return edge_to_triangle1, edge_to_triangle2
+
+    stiffness_matrix = zeros(6num_edges, 6num_edges)
+
+    for i = 1:6num_edges
+        for j = 1:6num_edges
+            T11 = edge_to_triangle1[i]
+            T12 = edge_to_triangle1[j]
+            T21 = edge_to_triangle2[i]
+            T22 = edge_to_triangle2[j]
+
+            if min(T11, T22) != min(T12, T22) &&
+               max(T11, T21) != max(T12, T22) &&
+               min(T11, T21) != max(T12, T22) &&
+               max(T11, T21) != min(T12, T22)
+                # 0 hits, do nothing
+                stiffness_matrix[i, j] = 0
+            elseif min(T11, T21) == min(T12, T22) && max(T11, T21) == max(T12, T22)
+                # 2 hits
+                if i != j
+                    throw(ErrorException("Something strange going on at (i, j) = $((i, j))"))
+                end
+                stiffness_matrix[i, j] = 8 / 3 * sqrt(3)
+            else
+                # 1 hit
+                stiffness_matrix[i, j] = -2 / 3 * sqrt(3)
+            end
+        end
+    end
+
+    stiffness_matrix *= 3N^2 / 2 / (sqrt(3) / 4)
+
+    if return_hermitian
+        return Hermitian(stiffness_matrix)
+    else
+        return stiffness_matrix
+    end
 end
