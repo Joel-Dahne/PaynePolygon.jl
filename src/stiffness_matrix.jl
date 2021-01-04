@@ -133,11 +133,11 @@ always hermitian, if `return_hermitian` is true then return an
 explicitly hermitian matrix (of type `Hermitian`), otherwise return a
 normal matrix.
 """
-function stiffness_matrix(N::Integer = 36; return_hermitian = true)
+function stiffness_matrix(T, N::Integer = 36; return_hermitian = true)
     num_edges = div(3N^2 - N, 2)
     edge_to_triangle1, edge_to_triangle2 = edges_to_triangles(N)
 
-    stiffness_matrix = zeros(Int, 6num_edges, 6num_edges)
+    stiffness_matrix = zeros(T, 6num_edges, 6num_edges)
 
     for i = 1:6num_edges
         for j = 1:6num_edges
@@ -174,11 +174,5 @@ function stiffness_matrix(N::Integer = 36; return_hermitian = true)
     end
 end
 
-function stiffness_matrix(T, N::Integer = 36; return_hermitian = true)
-    M = stiffness_matrix(N; return_hermitian)
-    if return_hermitian
-        return convert(Hermitian{T,Matrix{T}}, M)
-    else
-        return convert(Matrix{T}, M)
-    end
-end
+stiffness_matrix(N::Integer = 36; return_hermitian = true) =
+    stiffness_matrix(Int, N; return_hermitian)
