@@ -120,9 +120,13 @@ end
 
 """
     stiffness_matrix(N::Integer = 36; return_hermitian = true)
+    stiffness_matrix(T, N::Integer = 36; return_hermitian = true)
 
 Return the stiffness matrix for the triangulation of the problem. All
 the elements are integers so the result is exact.
+
+If `T` is given convert the result to this type, the result will be
+exact as long as `T` can represent `16N^2` and `-4N^2` exactly.
 
 The parameter `N` determines the fines of the grid. The result is
 always hermitian, if `return_hermitian` is true then return an
@@ -167,5 +171,14 @@ function stiffness_matrix(N::Integer = 36; return_hermitian = true)
         return Hermitian(stiffness_matrix)
     else
         return stiffness_matrix
+    end
+end
+
+function stiffness_matrix(T, N::Integer = 36; return_hermitian = true)
+    M = stiffness_matrix(N; return_hermitian)
+    if return_hermitian
+        return convert(Hermitian{T,Matrix{T}}, M)
+    else
+        return convert(Matrix{T}, M)
     end
 end

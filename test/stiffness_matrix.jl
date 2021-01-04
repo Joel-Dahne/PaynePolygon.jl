@@ -17,6 +17,15 @@ end
     @test sum(M) == 2239488
     @test sum(!iszero, M) == 57348
 
-    M = PaynePolygon.stiffness_matrix(return_hermitian = true)
+    M = PaynePolygon.stiffness_matrix(18, return_hermitian = true)
     @test M isa Hermitian
+
+    # Check that it returns correct types
+    @test eltype(PaynePolygon.stiffness_matrix(9)) == Int
+    @test eltype(PaynePolygon.stiffness_matrix(Float64, 9)) == Float64
+    @test eltype(PaynePolygon.stiffness_matrix(Arb, 9)) == Arb
+    @test eltype(PaynePolygon.stiffness_matrix(9, return_hermitian = false)) == Int
+    @test eltype(PaynePolygon.stiffness_matrix(Float64, 9, return_hermitian = false)) ==
+          Float64
+    @test eltype(PaynePolygon.stiffness_matrix(Arb, 9, return_hermitian = false)) == Arb
 end
