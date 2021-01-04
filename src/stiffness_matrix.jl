@@ -1,5 +1,11 @@
+"""
+    edges_to_triangle(N::Integer = 36)
+
+Compute edges between triangles, used in [`stiffness_matrix`](@ref).
+All elements are integers so the result is exact.
+"""
 function edges_to_triangles(N::Integer = 36)
-    function put!(v1, v2, x, c, debug = "")
+    function put!(v1, v2, x, c)
         if x > length(v1)
             x -= length(v1)
         end
@@ -12,15 +18,14 @@ function edges_to_triangles(N::Integer = 36)
         elseif v2[x] == 0
             v2[x] = c
         else
-            throw(ErrorException("something strange going on at $debug"))
+            throw(ErrorException("something strange going on"))
         end
     end
 
     num_edges = div(3N^2 - N, 2)
-    num_triangles = (N - 1)^2
 
-    edge_to_triangle1 = zeros(Int, 6num_edges)
-    edge_to_triangle2 = zeros(Int, 6num_edges)
+    edge_to_t1 = zeros(Int, 6num_edges)
+    edge_to_t2 = zeros(Int, 6num_edges)
 
     current_triangle = 1
 
@@ -32,55 +37,51 @@ function edges_to_triangles(N::Integer = 36)
                         (i - 1) * num_edges +
                         div(3(row - 1)^2 + (row - 1), 2) +
                         3div(index - 1, 2)
-                    put!(edge_to_triangle1, edge_to_triangle2, x + 1, current_triangle, "1")
-                    put!(edge_to_triangle1, edge_to_triangle2, x + 2, current_triangle, "1")
-                    put!(edge_to_triangle1, edge_to_triangle2, x + 3, current_triangle, "1")
+                    put!(edge_to_t1, edge_to_t2, x + 1, current_triangle)
+                    put!(edge_to_t1, edge_to_t2, x + 2, current_triangle)
+                    put!(edge_to_t1, edge_to_t2, x + 3, current_triangle)
                 else
                     x =
                         (i - 1) * num_edges +
                         div(3(row - 1)^2 + (row - 1), 2) +
                         3(div(index, 2) - 1)
-                    put!(edge_to_triangle1, edge_to_triangle2, x + 3, current_triangle, "2")
-                    put!(edge_to_triangle1, edge_to_triangle2, x + 4, current_triangle, "2")
+                    put!(edge_to_t1, edge_to_t2, x + 3, current_triangle)
+                    put!(edge_to_t1, edge_to_t2, x + 4, current_triangle)
                     put!(
-                        edge_to_triangle1,
-                        edge_to_triangle2,
+                        edge_to_t1,
+                        edge_to_t2,
                         (i - 1) * num_edges +
                         div(3(row - 2)^2 + (row - 2), 2) +
                         3div(index - 2, 2) +
                         2,
                         current_triangle,
-                        "2",
                     )
                 end
                 current_triangle += 1
             end
 
             # index = 2row - 1
-            x = (i - 1) * num_edges + div(3 * (row)^2 + (row), 2)
+            x = (i - 1) * num_edges + div(3 * row^2 + row, 2)
             put!(
-                edge_to_triangle1,
-                edge_to_triangle2,
-                (i - 1) * num_edges + div(3 * (row)^2 + (row), 2) - 1,
+                edge_to_t1,
+                edge_to_t2,
+                (i - 1) * num_edges + div(3 * row^2 + row, 2) - 1,
                 current_triangle,
-                "3",
             )
             put!(
-                edge_to_triangle1,
-                edge_to_triangle2,
-                (i - 1) * num_edges + div(3 * (row)^2 + (row), 2),
+                edge_to_t1,
+                edge_to_t2,
+                (i - 1) * num_edges + div(3 * row^2 + row, 2),
                 current_triangle,
-                "3",
             )
             put!(
-                edge_to_triangle1,
-                edge_to_triangle2,
+                edge_to_t1,
+                edge_to_t2,
                 (i - 1) * num_edges +
                 div(3N^2 - N, 2) +
                 div(3(row - 1)^2 + (row - 1), 2) +
                 1,
                 current_triangle,
-                (N, row),
             )
 
             current_triangle += 1
@@ -89,52 +90,50 @@ function edges_to_triangles(N::Integer = 36)
         for index = 1:2N-2
             if index % 2 == 1
                 x = (i - 1) * num_edges + div(3(N - 1)^2 + (N - 1), 2) + index
-                put!(edge_to_triangle1, edge_to_triangle2, x, current_triangle, "4")
-                put!(edge_to_triangle1, edge_to_triangle2, x + 1, current_triangle, "4")
+                put!(edge_to_t1, edge_to_t2, x, current_triangle)
+                put!(edge_to_t1, edge_to_t2, x + 1, current_triangle)
             else
                 x = (i - 1) * num_edges + div(3(N - 1)^2 + (N - 1), 2)
-                put!(edge_to_triangle1, edge_to_triangle2, x + index, current_triangle, "5")
+                put!(edge_to_t1, edge_to_t2, x + index, current_triangle)
+                put!(edge_to_t1, edge_to_t2, x + index + 1, current_triangle)
                 put!(
-                    edge_to_triangle1,
-                    edge_to_triangle2,
-                    x + index + 1,
-                    current_triangle,
-                    "5",
-                )
-                put!(
-                    edge_to_triangle1,
-                    edge_to_triangle2,
+                    edge_to_t1,
+                    edge_to_t2,
                     (i - 1) * num_edges +
                     div(3(N - 2)^2 + (N - 2), 2) +
                     3div(index - 2, 2) +
                     2,
                     current_triangle,
-                    (i, num_edges, N, index),
                 )
             end
             current_triangle += 1
         end
 
         x = (i - 1) * num_edges + div(3N^2 - N, 2)
-        put!(edge_to_triangle1, edge_to_triangle2, x, current_triangle, "6")
-        put!(
-            edge_to_triangle1,
-            edge_to_triangle2,
-            x + div(3(N - 1)^2 + (N - 1), 2) + 1,
-            current_triangle,
-            "6",
-        )
+        put!(edge_to_t1, edge_to_t2, x, current_triangle)
+        put!(edge_to_t1, edge_to_t2, x + div(3(N - 1)^2 + (N - 1), 2) + 1, current_triangle)
         current_triangle += 1
     end
 
-    return edge_to_triangle1, edge_to_triangle2
+    return edge_to_t1, edge_to_t2
 end
 
+"""
+    stiffness_matrix(N::Integer = 36; return_hermitian = true)
+
+Return the stiffness matrix for the triangulation of the problem. All
+the elements are integers so the result is exact.
+
+The parameter `N` determines the fines of the grid. The result is
+always hermitian, if `return_hermitian` is true then return an
+explicitly hermitian matrix (of type `Hermitian`), otherwise return a
+normal matrix.
+"""
 function stiffness_matrix(N::Integer = 36; return_hermitian = true)
     num_edges = div(3N^2 - N, 2)
     edge_to_triangle1, edge_to_triangle2 = edges_to_triangles(N)
 
-    stiffness_matrix = zeros(6num_edges, 6num_edges)
+    stiffness_matrix = zeros(Int, 6num_edges, 6num_edges)
 
     for i = 1:6num_edges
         for j = 1:6num_edges
@@ -154,15 +153,15 @@ function stiffness_matrix(N::Integer = 36; return_hermitian = true)
                 if i != j
                     throw(ErrorException("Something strange going on at (i, j) = $((i, j))"))
                 end
-                stiffness_matrix[i, j] = 8 / 3 * sqrt(3)
+                stiffness_matrix[i, j] = 4
             else
                 # 1 hit
-                stiffness_matrix[i, j] = -2 / 3 * sqrt(3)
+                stiffness_matrix[i, j] = -1
             end
         end
     end
 
-    stiffness_matrix *= 3N^2 / 2 / (sqrt(3) / 4)
+    stiffness_matrix *= 4N^2
 
     if return_hermitian
         return Hermitian(stiffness_matrix)
