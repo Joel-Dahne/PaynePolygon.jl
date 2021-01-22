@@ -118,6 +118,54 @@ function edges_to_triangles(N::Integer = 36)
     return edge_to_t1, edge_to_t2
 end
 
+""""
+    boundary_and_interior(N::Integer, d::Integer, h::Integer)
+
+Return two bitsets, the first containing all triangles intersecting
+the boundary of the interior domain and the second containing all
+triangles in their interior.
+
+Only returns the indices in the fundamental domain.
+"""
+function boundary_and_interior(N::Integer, d::Integer, h::Integer)
+    @assert mod(h, 3) == 0
+
+    boundary = BitSet()
+    interior = BitSet()
+
+    # The height of the interior domain is h, iterate over each row in
+    # the height.
+    for i = 1:h
+        # Determine the index for the first triangle on the row and
+        # the number of triangles on the row before we hit the
+        # boundary of the interior domain.
+        if i <= h ÷ 3
+            row_interior_start = (d + i - 1)^2 + 1
+            row_interior_length = 4(i - 1) + 1
+        else
+            row_interior_start = (d + i - 1)^2 + 1
+            row_interior_length = 2(h - i)
+        end
+
+        # Add the indices for the triangles in the interior
+        for j = 1:row_interior_length
+            push!(interior, row_interior_start + j - 1)
+
+            push!(interior, row_interior_start + 2(d + i) - j - 1)
+        end
+
+        # Add the indices for the triangles on the boundary
+        push!(boundary, row_interior_start + row_interior_length)
+        push!(boundary, row_interior_start + row_interior_length + 1)
+
+        push!(boundary, row_interior_start + 2(d + i - 1) - row_interior_length)
+        push!(boundary, row_interior_start + 2(d + i - 1) - row_interior_length - 1)
+    end
+
+    return boundary, interior
+end
+
+
 """
     stiffness_matrix(N::Integer = 36; return_hermitian = true)
     stiffness_matrix(T, N::Integer = 36; return_hermitian = true)
