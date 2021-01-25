@@ -84,33 +84,67 @@ function triangle_edge(c1, c2)
     return e1, e2
 end
 
-function plot_mesh(N::Integer; excluded = BitSet([7]), marked = BitSet([8]))
-    xs, ys = mesh_triangle_midpoints(N)
-    edge_to_triangle1, edge_to_triangle2 = edges_to_triangles(N)
+"""
+    plot_mesh(N = 9, d, h; plot_boundary = true, highlight_fundamental = plot_boundary)
 
+Plot the mesh given by the triple `(N, d, h)`, the same that is used
+in [`stiffness_matrix`](@ref). If `plot_boundary` is true then plot
+the boundary of the domain in addition to the edges in the mesh. If
+`highlight_fundamental` is true then highlight the fundamental domain
+to make it easier to visualize.
+"""
+function plot_mesh(
+    N::Integer = 9,
+    d::Integer = 0,
+    h::Integer = 0;
+    plot_boundary = true,
+    highlight_fundamental = plot_boundary,
+)
     num_triangles = N^2
-    edges = collect(zip(edge_to_triangle1, edge_to_triangle2))
-    indices = findall(
-        ((t1, t2),) ->
-            !((t1 % num_triangles ∈ excluded) || (t2 % num_triangles ∈ excluded)),
-        edges,
-    )
-    edge_to_triangle1 = edge_to_triangle1[indices]
-    edge_to_triangle2 = edge_to_triangle2[indices]
+    xs, ys = mesh_triangle_midpoints(N)
+    edges = collect(zip(edges_to_triangles(N)...))
+    boundary, interior, vertices = boundary_and_interior(N, d, h)
 
-    xs_edges = zeros(2, length(edge_to_triangle1))
-    ys_edges = zeros(2, length(edge_to_triangle1))
-    colors = permutedims([
-        ifelse(
-            edge_to_triangle1[i] % num_triangles ∈ marked ||
-            edge_to_triangle2[i] % num_triangles ∈ marked,
-            :red,
-            :blue,
-        ) for i in eachindex(edge_to_triangle1)
-    ])
+    if plot_boundary
+        filter!(
+            ((t1, t2),) ->
+                !((t1 % num_triangles ∈ interior) || (t2 % num_triangles ∈ interior)) &&
+                    !((t1 % num_triangles ∈ vertices) && (t2 % num_triangles ∈ vertices)),
+            edges,
+        )
+    else
+        filter!(
+            ((t1, t2),) ->
+                !((t1 % num_triangles ∈ interior) || (t2 % num_triangles ∈ interior)) &&
+                    !((t1 % num_triangles ∈ boundary) && (t2 % num_triangles ∈ boundary)),
+            edges,
+        )
+    end
 
-    for (i, (t1, t2)) in enumerate(zip(edge_to_triangle1, edge_to_triangle2))
-        e1, e2 = PaynePolygon.triangle_edge([xs[t1], ys[t1]], [xs[t2], ys[t2]])
+    xs_edges = zeros(2, length(edges))
+    ys_edges = zeros(2, length(edges))
+    colors = Array{Symbol}(undef, 1, length(edges))
+
+    for (i, (t1, t2)) in enumerate(edges)
+        if (t1 % num_triangles ∈ boundary) && (t2 % num_triangles ∈ boundary)
+            # The edge touches two triangles on the boundary. We don't
+            # print it as an edge between the triangles but as a line
+            # between the midpoints of them
+            @assert plot_boundary
+            e1 = [xs[t1], ys[t1]]
+            e2 = [xs[t2], ys[t2]]
+            v = e2 - e1
+            e1 = e1 - v
+            e2 = e2 + v
+            colors[i] = :black
+        elseif (t1 % num_triangles ∈ boundary) || (t2 % num_triangles ∈ boundary)
+            # The edge touches one triangle on the boundary
+            e1, e2 = PaynePolygon.triangle_edge([xs[t1], ys[t1]], [xs[t2], ys[t2]])
+            colors[i] = :red
+        else
+            e1, e2 = PaynePolygon.triangle_edge([xs[t1], ys[t1]], [xs[t2], ys[t2]])
+            colors[i] = :blue
+        end
         xs_edges[1, i] = e1[1]
         xs_edges[2, i] = e2[1]
         ys_edges[1, i] = e1[2]
@@ -118,18 +152,23 @@ function plot_mesh(N::Integer; excluded = BitSet([7]), marked = BitSet([8]))
     end
 
     h = sqrt(3) / 2
-    pl = plot(
-        [1, 0.5, -0.5, -1, -0.5, 0.5, 1],
-        [0, h, h, 0, -h, -h, 0],
-        aspect_ratio = true,
-        legend = :none,
-    )
 
-    scatter!(pl, xs, ys, ms = 1, aspect_ratio = true, legend = :none)
+    pl = plot(xs_edges, ys_edges, color = colors, aspect_ratio = true, legend = :none)
+    #scatter!(pl, xs, ys, ms = 1)
 
-    plot!(pl, xs_edges, ys_edges, color = colors)
-
-    plot!(pl, [1, 0.5, 0, 1], [0, h, 0, 0])
+    if plot_boundary
+        plot!(
+            pl,
+            [1, 0.5, -0.5, -1, -0.5, 0.5, 1],
+            [0, h, h, 0, -h, -h, 0],
+            aspect_ratio = true,
+            legend = :none,
+            c = :black,
+        )
+    end
+    if highlight_fundamental
+        plot!(pl, [1, 0.5, 0, 1], [0, h, 0, 0], c = :green)
+    end
 
     return pl
 end
