@@ -105,21 +105,12 @@ function plot_mesh(
     edges = collect(zip(edges_to_triangles(N)...))
     boundary, interior, vertices = boundary_and_interior(N, d, h)
 
-    if plot_boundary
-        filter!(
-            ((t1, t2),) ->
-                !((t1 % num_triangles ∈ interior) || (t2 % num_triangles ∈ interior)) &&
-                    !((t1 % num_triangles ∈ vertices) && (t2 % num_triangles ∈ vertices)),
-            edges,
-        )
-    else
-        filter!(
-            ((t1, t2),) ->
-                !((t1 % num_triangles ∈ interior) || (t2 % num_triangles ∈ interior)) &&
-                    !((t1 % num_triangles ∈ boundary) && (t2 % num_triangles ∈ boundary)),
-            edges,
-        )
-    end
+    filter!(
+        ((t1, t2),) ->
+            !((t1 % num_triangles ∈ interior) || (t2 % num_triangles ∈ interior)) &&
+                !((t1 % num_triangles ∈ vertices) && (t2 % num_triangles ∈ vertices)),
+        edges,
+    )
 
     xs_edges = zeros(2, length(edges))
     ys_edges = zeros(2, length(edges))
@@ -127,16 +118,20 @@ function plot_mesh(
 
     for (i, (t1, t2)) in enumerate(edges)
         if (t1 % num_triangles ∈ boundary) && (t2 % num_triangles ∈ boundary)
-            # The edge touches two triangles on the boundary. We don't
-            # print it as an edge between the triangles but as a line
-            # between the midpoints of them
-            @assert plot_boundary
-            e1 = [xs[t1], ys[t1]]
-            e2 = [xs[t2], ys[t2]]
-            v = e2 - e1
-            e1 = e1 - v
-            e2 = e2 + v
-            colors[i] = :black
+            # The edge touches two triangles on the boundary. We want
+            # to print only half of the edge, but we have to determine
+            # which half.
+            e1, e2 = PaynePolygon.triangle_edge([xs[t1], ys[t1]], [xs[t2], ys[t2]])
+
+            # Determine which part of the edge we want to keep but
+            # estimating which row it's on with sqrt(t1 %
+            # num_triangles).
+            if sqrt(t1 % num_triangles) < d + h ÷ 3
+                e2 = (e1 + e2) / 2
+            else
+                e1 = (e1 + e2) / 2
+            end
+            colors[i] = :red
         elseif (t1 % num_triangles ∈ boundary) || (t2 % num_triangles ∈ boundary)
             # The edge touches one triangle on the boundary
             e1, e2 = PaynePolygon.triangle_edge([xs[t1], ys[t1]], [xs[t2], ys[t2]])
@@ -151,23 +146,26 @@ function plot_mesh(
         ys_edges[2, i] = e2[2]
     end
 
-    h = sqrt(3) / 2
 
     pl = plot(xs_edges, ys_edges, color = colors, aspect_ratio = true, legend = :none)
     #scatter!(pl, xs, ys, ms = 1)
 
+    H = sqrt(3) / 2
     if plot_boundary
-        plot!(
-            pl,
-            [1, 0.5, -0.5, -1, -0.5, 0.5, 1],
-            [0, h, h, 0, -h, -h, 0],
-            aspect_ratio = true,
-            legend = :none,
-            c = :black,
-        )
+        # Boundary of hexagon
+        plot!(pl, [1, 0.5, -0.5, -1, -0.5, 0.5, 1], [0, H, H, 0, -H, -H, 0], c = :black)
+
+        # Boundary of interior triangles
+        pts = [d/N -H*2h/3N; (d+h)/N 0; d/N H*2h/3N; d/N -H*2h/3N]'
+        for i = 0:5
+            # Rotate points by i*π/3
+            M = [cospi(i / 3) sinpi(i / 3); -sinpi(i / 3) cospi(i / 3)]
+            pts_rotated = M * pts
+            plot!(pl, pts_rotated[1, :], pts_rotated[2, :], c = :black)
+        end
     end
     if highlight_fundamental
-        plot!(pl, [1, 0.5, 0, 1], [0, h, 0, 0], c = :green)
+        plot!(pl, [1, 0.5, 0, 1], [0, H, 0, 0], c = :green)
     end
 
     return pl

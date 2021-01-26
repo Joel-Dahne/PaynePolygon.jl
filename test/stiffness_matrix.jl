@@ -28,16 +28,16 @@ end
     @test M isa Hermitian
 
     # Check that it returns correct types
-    @test eltype(PaynePolygon.stiffness_matrix(9)) == Int
+    @test eltype(PaynePolygon.stiffness_matrix(9)) == Float64
     @test eltype(PaynePolygon.stiffness_matrix(Float64, 9)) == Float64
     @test eltype(PaynePolygon.stiffness_matrix(Arb, 9)) == Arb
-    @test eltype(PaynePolygon.stiffness_matrix(9, return_hermitian = false)) == Int
+    @test eltype(PaynePolygon.stiffness_matrix(9, return_hermitian = false)) == Float64
     @test eltype(PaynePolygon.stiffness_matrix(Float64, 9, return_hermitian = false)) ==
           Float64
     @test eltype(PaynePolygon.stiffness_matrix(Arb, 9, return_hermitian = false)) == Arb
 
     # Check that it runs when d and h are non-zero, doesn't check if
     # the result is correct
-    @test PaynePolygon.stiffness_matrix(9, 4, 3) isa Hermitian{Int}
+    @test PaynePolygon.stiffness_matrix(9, 4, 3) isa Hermitian{Float64}
     @test PaynePolygon.stiffness_matrix(Float64, 9, 4, 3) isa Hermitian{Float64}
 end

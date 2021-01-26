@@ -189,20 +189,23 @@ end
     stiffness_matrix(N::Integer = 9, d::Integer = 0, h::Integer = 0; return_hermitian = true)
     stiffness_matrix(T, N::Integer = 9, d::Integer = 0, h::Integer = 0; return_hermitian = true)
 
-Return the stiffness matrix for the triangulation of the problem. All
-the elements are integers so the result is exact.
+Return the stiffness matrix for the triangulation of the problem.
 
-If `T` is given convert the result to this type, the result will be
-exact as long as `T` can represent `16N^2` and `-4N^2` exactly.
+If `T` is given convert the result to this type. The elements are
+rational numbers so the result will be exact for `T<:Rational` if it
+can hold sufficiently large integers (around `N^2`). If `T = Arb` then
+the result will be an enclosure of the true result.
 
 The parameter `N` determines the fines of the grid. `d` and `h`
 determines the placement of the interior domains, setting them to zero
-gives no interior domains. The result is always hermitian, if
-`return_hermitian` is true then return an explicitly hermitian matrix
-(of type `Hermitian`), otherwise return a normal matrix.
+gives no interior domains.
+
+The result is always hermitian, if `return_hermitian` is true then
+return an explicitly hermitian matrix (of type `Hermitian`), otherwise
+return a normal matrix.
 """
 function stiffness_matrix(
-    T,
+    T::Type{<:Real},
     N::Integer = 9,
     d::Integer = 0,
     h::Integer = 0;
@@ -213,18 +216,22 @@ function stiffness_matrix(
     boundary, interior, vertices = boundary_and_interior(N, d, h)
 
     # Remove edges we don't want
-    # 1. Edges for which one of the triangles are in the interior
-    # 2. Edges for which both triangles are on the boundary
+    # 1. Edges for which one triangle is in the interior of the interior domains
+    # 2. Edges for triangles which meet at a vertex of the interior domains
     filter!(
         ((t1, t2),) ->
             !((t1 % num_triangles ∈ interior) || (t2 % num_triangles ∈ interior)) &&
-                !((t1 % num_triangles ∈ boundary) && (t2 % num_triangles ∈ boundary)),
+                !((t1 % num_triangles ∈ vertices) && (t2 % num_triangles ∈ vertices)),
         edges,
     )
 
     num_edges = length(edges)
     stiffness_matrix = zeros(T, num_edges, num_edges)
+    mass_diagonal = zeros(T, num_edges)
 
+    # Notice that the stiffness matrix and the mass matrix both
+    # contain the factor 1/sqrt(3). However in the end they all cancel
+    # out so we remove them from the beginning.
     for i in eachindex(edges)
         for j in eachindex(edges)
             (T11, T21) = edges[i]
@@ -241,35 +248,39 @@ function stiffness_matrix(
                 if i != j
                     throw(ErrorException("Something strange going on at (i, j) = $((i, j))"))
                 end
-                if T11 % num_triangles ∈ boundary || T12 % num_triangles ∈ boundary
-                    # One of the triangles are on the boundary
-                    # TODO: Handle this case
-                    stiffness_matrix[i, j] = 0
-                else
+                if T11 % num_triangles ∈ boundary && T21 % num_triangles ∈ boundary
+                    # Both of the triangles are on the boundary (1 - 1)
                     stiffness_matrix[i, j] = 4
+                    mass_diagonal[i] = 1 // 4
+                elseif T11 % num_triangles ∈ boundary || T21 % num_triangles ∈ boundary
+                    # One of the triangles are on the boundary (2 - 2)
+                    stiffness_matrix[i, j] = 12
+                    mass_diagonal[i] = 3 // 8
+                else
+                    # Neither triangle is on the boundary (0 - 0)
+                    stiffness_matrix[i, j] = 8
+                    mass_diagonal[i] = 1 // 2
                 end
             else
                 # 1 hit
-                # Check how many of the triangles are on the boundary
-                on_boundary = sum(t ∈ boundary for t in (T11, T21, T12, T22))
-                if on_boundary == 0
-                    stiffness_matrix[i, j] = -1
-                elseif on_boundary == 1
-                    #
-                    # TODO: Handle this case
-                    stiffness_matrix[i, j] = 0
-                elseif on_boundary == 2
-                    # This means that they triangle they have in common is on the boundary
-                    # TODO: Handle this case
-                    stiffness_matrix[i, j] = 0
+                if (T11 % num_triangles ∈ boundary || T21 % num_triangles ∈ boundary) &&
+                   (T12 % num_triangles ∈ boundary || T22 % num_triangles ∈ boundary)
+                    # Both of the edges have one triangle on the boundary (1 - 2)
+                    stiffness_matrix[i, j] = -2
                 else
-                    throw(ErrorException("something strange going on at (i, j) = $((i, j))"))
+                    # (0 - 0) or (2 - 0)
+                    stiffness_matrix[i, j] = -2
                 end
             end
         end
     end
 
-    stiffness_matrix *= 4N^2
+    mass_matrix = Diagonal(mass_diagonal)
+
+    stiffness_matrix = inv(mass_matrix) * stiffness_matrix
+
+    # FIXME: Why do we have this scaling?
+    stiffness_matrix *= N^2
 
     if return_hermitian
         return Hermitian(stiffness_matrix)
@@ -279,4 +290,4 @@ function stiffness_matrix(
 end
 
 stiffness_matrix(N::Integer = 9, d::Integer = 0, h::Integer = 0; return_hermitian = true) =
-    stiffness_matrix(Int, N, d, h; return_hermitian)
+    stiffness_matrix(Float64, N, d, h; return_hermitian)
