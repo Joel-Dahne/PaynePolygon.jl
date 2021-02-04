@@ -251,15 +251,15 @@ function stiffness_matrix(
                 if T11 % num_triangles ∈ boundary && T21 % num_triangles ∈ boundary
                     # Both of the triangles are on the boundary (1 - 1)
                     stiffness_matrix[i, j] = 4
-                    mass_diagonal[i] = 1 // 4
+                    mass_diagonal[i] = 1 // 4N^2
                 elseif T11 % num_triangles ∈ boundary || T21 % num_triangles ∈ boundary
                     # One of the triangles are on the boundary (2 - 2)
                     stiffness_matrix[i, j] = 12
-                    mass_diagonal[i] = 3 // 8
+                    mass_diagonal[i] = 3 // 8N^2
                 else
                     # Neither triangle is on the boundary (0 - 0)
                     stiffness_matrix[i, j] = 8
-                    mass_diagonal[i] = 1 // 2
+                    mass_diagonal[i] = 1 // 2N^2
                 end
             else
                 # 1 hit
@@ -277,15 +277,10 @@ function stiffness_matrix(
 
     mass_matrix = Diagonal(mass_diagonal)
 
-    stiffness_matrix = inv(mass_matrix) * stiffness_matrix
-
-    # FIXME: Why do we have this scaling?
-    stiffness_matrix *= N^2
-
     if return_hermitian
-        return Hermitian(stiffness_matrix)
+        return Hermitian(inv(mass_matrix) * stiffness_matrix)
     else
-        return stiffness_matrix
+        return inv(mass_matrix) * stiffness_matrix
     end
 end
 
