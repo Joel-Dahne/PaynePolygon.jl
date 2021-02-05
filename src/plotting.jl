@@ -88,17 +88,23 @@ end
     plot_mesh(N = 9, d, h; plot_boundary = true, highlight_fundamental = plot_boundary)
 
 Plot the mesh given by the triple `(N, d, h)`, the same that is used
-in [`stiffness_matrix`](@ref). If `plot_boundary` is true then plot
-the boundary of the domain in addition to the edges in the mesh. If
-`highlight_fundamental` is true then highlight the fundamental domain
-to make it easier to visualize.
+in [`stiffness_matrix`](@ref).
+
+If `plot_boundary` is true then plot the boundary of the domain in
+addition to the edges in the mesh. If `highlight_fundamental` is true
+then highlight the fundamental domain to make it easier to visualize.
+If `zoom_hole` is true then zoom in on one of the holes to make it
+easier to see the details. If `plot_mesh` is false then don't plot the
+mesh, this is useful for plotting only the boundary of the domain.
 """
 function plot_mesh(
     N::Integer = 9,
     d::Integer = 0,
     h::Integer = 0;
+    plot_mesh = true,
     plot_boundary = true,
-    highlight_fundamental = plot_boundary,
+    highlight_fundamental = false,
+    zoom_hole = false,
 )
     num_triangles = N^2
     xs, ys = mesh_triangle_midpoints(N)
@@ -146,9 +152,16 @@ function plot_mesh(
         ys_edges[2, i] = e2[2]
     end
 
+    if plot_mesh
+        pl = plot(xs_edges, ys_edges, color = colors, aspect_ratio = true, legend = :none)
+    else
+        pl = plot(aspect_ratio = true, legend = :none)
+    end
 
-    pl = plot(xs_edges, ys_edges, color = colors, aspect_ratio = true, legend = :none)
-    #scatter!(pl, xs, ys, ms = 1)
+    if zoom_hole
+        xlims!(pl, ((d - 2) / N, (d + h + 2) / N))
+        ylims!(pl, sqrt(3) / 2 .* (-(h + 1) / N, (h + 1) / N))
+    end
 
     H = sqrt(3) / 2
     if plot_boundary
