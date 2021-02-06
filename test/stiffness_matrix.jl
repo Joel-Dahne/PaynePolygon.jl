@@ -40,4 +40,10 @@ end
     # the result is correct
     @test PaynePolygon.stiffness_matrix(9, 4, 3) isa Hermitian{Float64}
     @test PaynePolygon.stiffness_matrix(Float64, 9, 4, 3) isa Hermitian{Float64}
+
+    # Check that it gives reasonable results for N = 9, d = 4, h = 3
+    # by comparing to precomputed results
+    M = PaynePolygon.stiffness_matrix(9, 4, 3)
+    @test eigvals(convert(Hermitian{Float64,Matrix{Float64}}, M), 1:5) ≈
+          [27.016, 67.2163, 67.4369, 92.1418, 92.794] rtol = 1e-5
 end

@@ -246,7 +246,9 @@ function stiffness_matrix(
             elseif min(T11, T21) == min(T12, T22) && max(T11, T21) == max(T12, T22)
                 # 2 hits
                 if i != j
-                    throw(ErrorException("Something strange going on at (i, j) = $((i, j))"))
+                    throw(
+                        ErrorException("Something strange going on at (i, j) = $((i, j))"),
+                    )
                 end
                 if T11 % num_triangles ∈ boundary && T21 % num_triangles ∈ boundary
                     # Both of the triangles are on the boundary (1 - 1)
