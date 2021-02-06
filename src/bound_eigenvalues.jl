@@ -1,10 +1,20 @@
 """
-    separate_eigenvalues(M::Hermitian, k::Integer)
+    separate_eigenvalues(M::Hermitian, k::Integer; Q = nothing)
 
 Compute a number `Λ` which separates the first `k` eigenvalues of `M`
 from the rest.
+
+`Q` should contain the (approximate) eigenvectors of `M` as columns,
+or if `nothing` is given then it computes the eigenvectors by first
+converting `M` to `Float64` and then computing the eigenvalues with
+`eigen`. `Q` is then in both cases converted to a `Matrix{eltype(M)}`.
+
 """
-function separate_eigenvalues(M::Hermitian, k::Integer)
+function separate_eigenvalues(
+    M::Hermitian,
+    k::Integer;
+    Q::Union{Nothing,AbstractMatrix} = nothing,
+)
     N = size(M)[1]
 
     if k < 0
@@ -17,11 +27,16 @@ function separate_eigenvalues(M::Hermitian, k::Integer)
         return convert(eltype(M), Inf)
     end
 
-    # Compute approximate eigenvalues and eigenvectors
-    res = eigen(convert(Hermitian{Float64,Matrix{Float64}}, M))
+    if isnothing(Q)
+        # Compute approximate eigenvectors
+        Q = eigen(convert(Hermitian{Float64,Matrix{Float64}}, M)).vectors
+    else
+        size(M) == size(Q) ||
+            throw(ArgumentError("M and Q should have the same dimensions"))
+    end
 
-    # Matrix with approximate eigenvectors as columns in the same type as M
-    Q = convert(Matrix{eltype(M)}, res.vectors)
+    # Convert Q to the appropriate type
+    Q = convert(Matrix{eltype(M)}, Q)
 
     # Compute s from Lemma 2.4 in GS-O
     ss = abs.(Q' * Q - I)
@@ -56,10 +71,12 @@ function separate_eigenvalues(M::Hermitian, k::Integer)
     Λ_upper = minimum([D[i, i] - Rs[i] for i = k+1:N])
 
     if !(Λ_lower < Λ_upper)
-        throw(ErrorException(
-            "could not separate the first $k eigenvalues from the rest," *
-            " got lower bound $Λ_lower and upper bound $Λ_upper",
-        ))
+        throw(
+            ErrorException(
+                "could not separate the first $k eigenvalues from the rest," *
+                " got lower bound $Λ_lower and upper bound $Λ_upper",
+            ),
+        )
     end
 
     # We want the bound to be as large as possible, so take the upper bound
@@ -67,12 +84,25 @@ function separate_eigenvalues(M::Hermitian, k::Integer)
 end
 
 """
-    separate_eigenvalues(M::Hermitian, k::Integer)
+    separate_eigenvalues(M::Hermitian{Arb}, k::Integer; Q = nothing)
 
 Compute a number `Λ` which separates the first `k` eigenvalues of `M`
 from the rest.
+
+The number is computed in a rigorous way as to guarantee the
+separation.
+
+`Q` should contain the (approximate) eigenvectors of `M` as columns,
+or if `nothing` is given then it computes the eigenvectors by first
+converting `M` to `Float64` and then computing the eigenvalues with
+`eigen`. `Q` is then in both cases converted to an `ArbMatrix`.
+
 """
-function separate_eigenvalues(M::Hermitian{Arb}, k::Integer)
+function separate_eigenvalues(
+    M::Hermitian{Arb},
+    k::Integer;
+    Q::Union{Nothing,AbstractMatrix} = nothing,
+)
     N = size(M)[1]
 
     if k < 0
@@ -85,11 +115,18 @@ function separate_eigenvalues(M::Hermitian{Arb}, k::Integer)
         return convert(eltype(M), Inf)
     end
 
-    # Compute approximate eigenvalues and eigenvectors
-    res = eigen(convert(Hermitian{Float64,Matrix{Float64}}, M))
+    if isnothing(Q)
+        # Compute approximate eigenvectors
+        Q = eigen(convert(Hermitian{Float64,Matrix{Float64}}, M)).vectors
+    else
+        size(M) == size(Q) ||
+            throw(ArgumentError("M and Q should have the same dimensions"))
+    end
 
-    # Matrix with approximate eigenvectors as an ArbMatrix
-    Q = ArbMatrix(res.vectors)
+    # Convert Q to an ArbMatrix if needed
+    if !(Q isa ArbMatrix)
+        Q = ArbMatrix(Q)
+    end
     Q_transpose = Arblib.transpose!(similar(Q), Q)
 
     # M as an ArbMatrix
@@ -129,10 +166,12 @@ function separate_eigenvalues(M::Hermitian{Arb}, k::Integer)
     Λ_upper = minimum([D[i, i] - Rs[i] for i = k+1:N])
 
     if !(Λ_lower < Λ_upper)
-        throw(ErrorException(
-            "could not separate the first $k eigenvalues from the rest," *
-            " got lower bound $Λ_lower and upper bound $Λ_upper",
-        ))
+        throw(
+            ErrorException(
+                "could not separate the first $k eigenvalues from the rest," *
+                " got lower bound $Λ_lower and upper bound $Λ_upper",
+            ),
+        )
     end
 
     # We want the bound to be as large as possible, so take the upper bound
