@@ -96,6 +96,10 @@ then highlight the fundamental domain to make it easier to visualize.
 If `zoom_hole` is true then zoom in on one of the holes to make it
 easier to see the details. If `plot_mesh` is false then don't plot the
 mesh, this is useful for plotting only the boundary of the domain.
+
+If `optimize` is true then don't plot each boundary segment separately
+but plot them as longer lines. This reduces the space required for the
+resulting plot substantially, in particular for finer meshes.
 """
 function plot_mesh(
     N::Integer = 9,
@@ -105,57 +109,153 @@ function plot_mesh(
     plot_boundary = true,
     highlight_fundamental = false,
     zoom_hole = false,
+    optimize = true,
 )
-    num_triangles = N^2
-    xs, ys = mesh_triangle_midpoints(N)
-    edges = collect(zip(edges_to_triangles(N)...))
-    boundary, interior, vertices = boundary_and_interior(N, d, h)
-
-    filter!(
-        ((t1, t2),) ->
-            !((t1 % num_triangles ∈ interior) || (t2 % num_triangles ∈ interior)) &&
-                !((t1 % num_triangles ∈ vertices) && (t2 % num_triangles ∈ vertices)),
-        edges,
-    )
-
-    xs_edges = zeros(2, length(edges))
-    ys_edges = zeros(2, length(edges))
-    colors = Array{Symbol}(undef, 1, length(edges))
-
-    for (i, (t1, t2)) in enumerate(edges)
-        if (t1 % num_triangles ∈ boundary) && (t2 % num_triangles ∈ boundary)
-            # The edge touches two triangles on the boundary. We want
-            # to print only half of the edge, but we have to determine
-            # which half.
-            e1, e2 = PaynePolygon.triangle_edge([xs[t1], ys[t1]], [xs[t2], ys[t2]])
-
-            # Determine which part of the edge we want to keep but
-            # estimating which row it's on with sqrt(t1 %
-            # num_triangles).
-            if sqrt(t1 % num_triangles) < d + h ÷ 3
-                e2 = (e1 + e2) / 2
-            else
-                e1 = (e1 + e2) / 2
-            end
-            colors[i] = :red
-        elseif (t1 % num_triangles ∈ boundary) || (t2 % num_triangles ∈ boundary)
-            # The edge touches one triangle on the boundary
-            e1, e2 = PaynePolygon.triangle_edge([xs[t1], ys[t1]], [xs[t2], ys[t2]])
-            colors[i] = :red
-        else
-            e1, e2 = PaynePolygon.triangle_edge([xs[t1], ys[t1]], [xs[t2], ys[t2]])
-            colors[i] = :blue
-        end
-        xs_edges[1, i] = e1[1]
-        xs_edges[2, i] = e2[1]
-        ys_edges[1, i] = e1[2]
-        ys_edges[2, i] = e2[2]
-    end
+    pl = plot(aspect_ratio = true, legend = :none)
 
     if plot_mesh
-        pl = plot(xs_edges, ys_edges, color = colors, aspect_ratio = true, legend = :none)
-    else
-        pl = plot(aspect_ratio = true, legend = :none)
+        num_triangles = N^2
+        xs, ys = mesh_triangle_midpoints(N)
+        edges = collect(zip(edges_to_triangles(N)...))
+        boundary, interior, vertices = boundary_and_interior(N, d, h)
+
+        if optimize
+            H = sqrt(3) / 2
+
+            ### Plot blue lines
+            # Vertical blue lines
+            ys_lines = let ys = range(-H, H, length = 2N + 1)[2:end-1]
+                permutedims([ys ys])
+            end
+            xs_lines =
+                [ifelse(y > 0, y / sqrt(3) - 1, -y / sqrt(3) - 1) for y in ys_lines] .* [1, -1]
+            plot!(xs_lines, ys_lines, color = :blue)
+
+            # Diagonal blue lines
+            xs_lines =
+                let xs = [
+                        range(-1, -0.5, length = N + 1)[2:end]
+                        range(-0.5, 0.5, length = N + 1)[2:end-1]
+                    ]
+                    permutedims([xs -reverse(xs)])
+                end
+            ys_lines = let ys = [range(0, H, length = N + 1)[2:end]; fill(H, N - 1)]
+                permutedims([ys -reverse(ys)])
+            end
+            plot!(xs_lines, ys_lines, color = :blue)
+            plot!(xs_lines, -ys_lines, color = :blue)
+
+            # Red lines
+            filter!(
+                ((t1, t2),) ->
+                    !((t1 % num_triangles ∈ interior) || (t2 % num_triangles ∈ interior)) &&
+                        !(
+                            (t1 % num_triangles ∈ vertices) &&
+                            (t2 % num_triangles ∈ vertices)
+                        ) &&
+                        (
+                            (t1 % num_triangles ∈ boundary) ||
+                            (t2 % num_triangles ∈ boundary)
+                        ),
+                edges,
+            )
+
+            xs_edges = zeros(2, length(edges))
+            ys_edges = zeros(2, length(edges))
+
+            for (i, (t1, t2)) in enumerate(edges)
+                if (t1 % num_triangles ∈ boundary) && (t2 % num_triangles ∈ boundary)
+                    # The edge touches two triangles on the boundary. We want
+                    # to print only half of the edge, but we have to determine
+                    # which half.
+                    e1, e2 = PaynePolygon.triangle_edge([xs[t1], ys[t1]], [xs[t2], ys[t2]])
+
+                    # Determine which part of the edge we want to keep but
+                    # estimating which row it's on with sqrt(t1 %
+                    # num_triangles).
+                    if sqrt(t1 % num_triangles) < d + h ÷ 3
+                        e2 = (e1 + e2) / 2
+                    else
+                        e1 = (e1 + e2) / 2
+                    end
+                else
+                    (t1 % num_triangles ∈ boundary) || (t2 % num_triangles ∈ boundary)
+                    # The edge touches one triangle on the boundary
+                    e1, e2 = PaynePolygon.triangle_edge([xs[t1], ys[t1]], [xs[t2], ys[t2]])
+                end
+                xs_edges[1, i] = e1[1]
+                xs_edges[2, i] = e2[1]
+                ys_edges[1, i] = e1[2]
+                ys_edges[2, i] = e2[2]
+            end
+
+            plot!(pl, xs_edges, ys_edges, color = :red, aspect_ratio = true, legend = :none)
+
+            # Handle interior of holes
+            pts = [d/N -H*2h/3N; (d+h)/N 0; d/N H*2h/3N; d/N -H*2h/3N]'
+            xs_lines = begin
+                xs = range(0, h / N, length = 2h ÷ 3 + 1)[2:end-1]
+                xs_lines = permutedims(
+                    [fill(d / N, 4h ÷ 3 - 1) (d / N .+ [xs; h / N; reverse(xs)])],
+                )
+
+                ys = range(-H * 2h / 3N, H * 2h / 3N, length = 4h ÷ 3 + 1)[2:end-1]
+                ys_lines = permutedims([ys ys])
+            end
+        else
+            filter!(
+                ((t1, t2),) ->
+                    !((t1 % num_triangles ∈ interior) || (t2 % num_triangles ∈ interior)) &&
+                        !(
+                            (t1 % num_triangles ∈ vertices) &&
+                            (t2 % num_triangles ∈ vertices)
+                        ),
+                edges,
+            )
+
+            xs_edges = zeros(2, length(edges))
+            ys_edges = zeros(2, length(edges))
+            colors = Array{Symbol}(undef, 1, length(edges))
+
+            for (i, (t1, t2)) in enumerate(edges)
+                if (t1 % num_triangles ∈ boundary) && (t2 % num_triangles ∈ boundary)
+                    # The edge touches two triangles on the boundary. We want
+                    # to print only half of the edge, but we have to determine
+                    # which half.
+                    e1, e2 = PaynePolygon.triangle_edge([xs[t1], ys[t1]], [xs[t2], ys[t2]])
+
+                    # Determine which part of the edge we want to keep but
+                    # estimating which row it's on with sqrt(t1 %
+                    # num_triangles).
+                    if sqrt(t1 % num_triangles) < d + h ÷ 3
+                        e2 = (e1 + e2) / 2
+                    else
+                        e1 = (e1 + e2) / 2
+                    end
+                    colors[i] = :red
+                elseif (t1 % num_triangles ∈ boundary) || (t2 % num_triangles ∈ boundary)
+                    # The edge touches one triangle on the boundary
+                    e1, e2 = PaynePolygon.triangle_edge([xs[t1], ys[t1]], [xs[t2], ys[t2]])
+                    colors[i] = :red
+                else
+                    e1, e2 = PaynePolygon.triangle_edge([xs[t1], ys[t1]], [xs[t2], ys[t2]])
+                    colors[i] = :blue
+                end
+                xs_edges[1, i] = e1[1]
+                xs_edges[2, i] = e2[1]
+                ys_edges[1, i] = e1[2]
+                ys_edges[2, i] = e2[2]
+            end
+
+            plot!(
+                pl,
+                xs_edges,
+                ys_edges,
+                color = colors,
+                aspect_ratio = true,
+                legend = :none,
+            )
+        end
     end
 
     if zoom_hole
@@ -174,7 +274,17 @@ function plot_mesh(
             # Rotate points by i*π/3
             M = [cospi(i / 3) sinpi(i / 3); -sinpi(i / 3) cospi(i / 3)]
             pts_rotated = M * pts
-            plot!(pl, pts_rotated[1, :], pts_rotated[2, :], c = :black)
+            if optimize
+                plot!(
+                    pl,
+                    pts_rotated[1, :],
+                    pts_rotated[2, :],
+                    c = :black,
+                    fill = (0, :white),
+                )
+            else
+                plot!(pl, pts_rotated[1, :], pts_rotated[2, :], c = :black)
+            end
         end
     end
     if highlight_fundamental
