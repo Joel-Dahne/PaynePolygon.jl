@@ -39,8 +39,7 @@ function separate_eigenvalues(
     Q = convert(Matrix{eltype(M)}, Q)
 
     # Compute s from Lemma 2.4 in GS-O
-    ss = abs.(Q' * Q - I)
-    s = maximum(ss)
+    s = maximum(abs, Q' * Q - I)
 
     # Compute D
     MQ = M * Q
@@ -61,7 +60,7 @@ function separate_eigenvalues(
     # Compute the radii of the disks in the Gershgorin circle theorem
     Rs = similar(Mv_norms)
     for i in eachindex(Rs)
-        Rs[i] = sum(D[i, j] + bounds[i, k] for j in [1:i-1; i+1:N])
+        Rs[i] = sum(abs(D[i, j]) + bounds[i, j] for j in [1:i-1; i+1:N])
     end
 
     # Compute upper bound of the first k disks
@@ -133,8 +132,17 @@ function separate_eigenvalues(
     M = ArbMatrix(M)
 
     # Compute s from Lemma 2.4 in GS-O
-    ss = abs.(Q_transpose * Q - I)
-    s = maximum(ss)
+    s = let ss = Q_transpose * Q
+        s = zero(ss[1])
+        for i in CartesianIndices(ss)
+            if i.I[1] == i.I[2]
+                s = Arblib.max!(s, s, abs(ss[i] - 1))
+            else
+                s = Arblib.max!(s, s, abs(ss[i]))
+            end
+        end
+        s
+    end
 
     # Compute D
     MQ = M * Q
@@ -147,16 +155,18 @@ function separate_eigenvalues(
     Mv_norms = [norm(v) for v in eachcol(MQ)]
     M_norm = Arblib.frobenius_norm!(Arb(), M)
 
-    for (i, vi) in enumerate(eachcol(Q))
-        for (j, vj) in enumerate(eachcol(Q))
-            bounds[i, j] = sqrt(3s) * (Mv_norms[i] + Mv_norms[j]) + 4s * M_norm
+    let sqrt3s = sqrt(3s), foursM_norm = 4s * M_norm
+        for (i, vi) in enumerate(eachcol(Q))
+            for (j, vj) in enumerate(eachcol(Q))
+                bounds[i, j] = sqrt3s * (Mv_norms[i] + Mv_norms[j]) + foursM_norm
+            end
         end
     end
 
     # Compute the radii of the disks in the Gershgorin circle theorem
     Rs = similar(Mv_norms)
     for i in eachindex(Rs)
-        Rs[i] = sum(D[i, j] + bounds[i, k] for j in [1:i-1; i+1:N])
+        Rs[i] = sum(abs(D[i, j]) + bounds[i, j] for j in [1:i-1; i+1:N])
     end
 
     # Compute upper bound of the first k disks
