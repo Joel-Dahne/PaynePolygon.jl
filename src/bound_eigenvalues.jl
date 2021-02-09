@@ -50,9 +50,8 @@ function separate_eigenvalues(
 
     Mv_norms = [norm(v) for v in eachcol(MQ)]
     M_norm = norm(M)
-
-    for (i, vi) in enumerate(eachcol(Q))
-        for (j, vj) in enumerate(eachcol(Q))
+    for i = 1:N
+        for j = 1:N
             bounds[i, j] = sqrt(3s) * (Mv_norms[i] + Mv_norms[j]) + 4s * M_norm
         end
     end
@@ -155,11 +154,9 @@ function separate_eigenvalues(
     Mv_norms = [norm(v) for v in eachcol(MQ)]
     M_norm = Arblib.frobenius_norm!(Arb(), M)
 
-    let sqrt3s = sqrt(3s), foursM_norm = 4s * M_norm
-        for (i, vi) in enumerate(eachcol(Q))
-            for (j, vj) in enumerate(eachcol(Q))
-                bounds[i, j] = sqrt3s * (Mv_norms[i] + Mv_norms[j]) + foursM_norm
-            end
+    for i = 1:N
+        for j = 1:N
+            bounds[i, j] = sqrt(3s) * (Mv_norms[i] + Mv_norms[j]) + 4s * M_norm
         end
     end
 
