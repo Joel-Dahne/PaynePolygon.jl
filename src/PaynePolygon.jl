@@ -1,10 +1,12 @@
 module PaynePolygon
 
-using LinearAlgebra, Arblib, Plots
+using LinearAlgebra, Arblib, ArbTools, JLD, MethodOfParticularSolutions, Nemo, Plots
 
 include("stiffness_matrix.jl")
 include("bound_eigenvalues.jl")
 
 include("plotting.jl")
+
+include("handle_eigenfunctions.jl")
 
 end # module
