@@ -46,11 +46,12 @@ Load an eigenfunction which have been stored with
 
 It returns the domain, the eigenfunction and the eigenvalue.
 """
-function load_eigenfunctions(
+function load_eigenfunction(
     filename::AbstractString,
     N::Integer = 27,
     d::Integer = 11,
-    h::Integer = 6,
+    h::Integer = 6;
+    T = arb,
 )
     values = load(filename)
 
@@ -61,8 +62,8 @@ function load_eigenfunctions(
         d,
         h,
         parent,
-        T = Float64,
-        symmetry_class = values["symmetry_class"],
+        symmetry_class = values["symmetry_class"];
+        T,
     )
 
     set_eigenfunction!(u, ArbTools.arb_load_dump.(values["cs_dump"], Ref(parent)))

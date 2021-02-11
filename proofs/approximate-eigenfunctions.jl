@@ -56,7 +56,7 @@ plot(domains[1], 1000, 0, legend = :none)
 md"Finally we want to compute the approximations. The number of free coefficients we use is parametrised by `n`, for a given `n` the number of free coefficients used for the eigenfunction `u` will be `n*sum(u.orders)`. The values for `n` that we use are"
 
 # ╔═╡ 5aefc90e-6b80-11eb-06c1-0ff8b3b4647d
-ns = [1, 3, 2, 2]
+ns = [1, 10, 6, 6]
 
 # ╔═╡ ac3c2e10-6b80-11eb-2763-c3b7a7e3d582
 md"And for references we have the following values for `sum(u.orders)`"
