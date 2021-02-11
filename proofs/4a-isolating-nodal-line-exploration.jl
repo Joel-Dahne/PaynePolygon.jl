@@ -8,7 +8,7 @@ using InteractiveUtils
 using Revise
 
 # ╔═╡ 3d88a638-6bb7-11eb-097c-c38d8e633876
-using ArbTools,
+using ArbTools, JLD,
     MethodOfParticularSolutions, Nemo, NLsolve, Optim, PaynePolygon, Plots, StaticArrays
 
 # ╔═╡ 88875ad6-6bb1-11eb-3a51-9535b2be326c
@@ -181,6 +181,12 @@ let
     hline!([0])
 end
 
+# ╔═╡ b9c346c4-6c55-11eb-23e9-25939f697bd0
+md"The value of `distance` will be used in the proof so store it for later use"
+
+# ╔═╡ dbf1c536-6c55-11eb-3365-cd930ba42cf6
+save("../data/distance.jld", "distance", distance)
+
 # ╔═╡ effc8eb6-6c42-11eb-156b-513f9a6ea67b
 md"Finally we check if it seems like the $L^\infty$ bound for `u` from Theorem 5.2 in the paper is good enough. We do this by computing an approximation of the bound and compare that with `value`, if the bound is smaller than we are good to go! The first step is to compute approximations of the the norm `n` of `u` and its maximum value on the boundary `m`."
 
@@ -298,6 +304,8 @@ m / n
 # ╠═4d6ae718-6c3f-11eb-3dad-e5a50eef4e86
 # ╟─db3999ae-6c3f-11eb-0bbe-e1ff1d1862ba
 # ╠═28abf718-6c40-11eb-2d2c-afe5ce807dd3
+# ╠═b9c346c4-6c55-11eb-23e9-25939f697bd0
+# ╠═dbf1c536-6c55-11eb-3365-cd930ba42cf6
 # ╟─effc8eb6-6c42-11eb-156b-513f9a6ea67b
 # ╠═2917dbc4-6c43-11eb-3edc-d7d8637dca50
 # ╟─ef47784a-6c43-11eb-0085-217b07d70666
