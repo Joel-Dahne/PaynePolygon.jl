@@ -243,7 +243,7 @@ function symtriUpper!(
         τk = LinearAlgebra.reflector!(vec(transpose(view(AS, k, (k+1):n)')))
         τ[k] = τk'
 
-        for j = (k+1):n
+        Threads.@threads for j = (k+1):n
             tmp = AS[k+1, j]
             for i = (k+2):j
                 tmp += AS[k, i] * AS[i, j]
@@ -260,7 +260,7 @@ function symtriUpper!(
         end
         ξ = real(vcAv * τk)
 
-        for j = (k+1):n
+        Threads.@threads for j = (k+1):n
             ujt = u[j]
             hjt = j > (k + 1) ? AS[k, j] : one(ujt)
             ξhjt = ξ * hjt
