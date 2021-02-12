@@ -6,6 +6,7 @@ version = "0.1.0"
 [deps]
 ArbTools = "3c5857ab-c5d3-4a72-9f97-b009bfc1bcb8"
 Arblib = "fb37089c-8514-4489-9461-98f9c8763369"
+GenericLinearAlgebra = "14197337-ba66-59df-a3e3-ca00e7dcff7a"
 JLD = "4138dd39-2aa7-5051-a626-17a0bb65d9c8"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MethodOfParticularSolutions = "8ef66b40-dd63-11e9-3096-196784f6a4ee"

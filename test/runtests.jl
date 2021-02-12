@@ -1,4 +1,4 @@
-using PaynePolygon, Test, MAT, LinearAlgebra, Arblib, Random
+using PaynePolygon, Test, MAT, LinearAlgebra, Arblib, Random, GenericLinearAlgebra
 
 @testset "PaynePolygon" begin
     include("stiffness_matrix.jl")

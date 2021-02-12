@@ -46,3 +46,9 @@
     ) <= 1e-6
     @test PaynePolygon.separate_eigenvalues(M, 4) == Inf
 end
+
+@testset "symtri!" begin
+    M = PaynePolygon.stiffness_matrix(9, 4, 3)
+
+    @test GenericLinearAlgebra.symtri!(copy(M)) == PaynePolygon.symtri!(copy(M))
+end

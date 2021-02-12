@@ -184,3 +184,97 @@ function separate_eigenvalues(
     # We want the bound to be as large as possible, so take the upper bound
     return Λ_upper
 end
+
+"""
+    symtri!(A::Hermitian)
+
+Reduce `A` to symmetric tridiagonal form. The code is the same as in
+[GenericLinearAlgebra.jl](https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/)
+but with debug info and parallelized.
+
+It has the following license
+
+The MIT License (MIT)
+
+Copyright (c) 2014-2018 Andreas Noack
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+function symtri!(A::Hermitian{T}) where {T<:Real}
+    A.uplo == 'U' || throw(ArgumentError("only A.uplo = 'U' is supported, got $A.uplo"))
+    return symtriUpper!(A.data)
+end
+
+# Assume that upper triangle stores the relevant part
+function symtriUpper!(
+    AS::StridedMatrix{T},
+    τ = zeros(T, size(AS, 1) - 1),
+    u = Vector{T}(undef, size(AS, 1)),
+) where {T}
+    n = LinearAlgebra.checksquare(AS)
+
+    # We ignore any non-real components of the diagonal
+    @inbounds for i = 1:n
+        AS[i, i] = real(AS[i, i])
+    end
+
+    @inbounds for k = 1:(n-2+!(T <: Real))
+        # This is a bit convoluted method to get the conjugated vector
+        # but conjugation is required for correctness of arrays of
+        # quaternions. Eventually, it should be sufficient to write
+        # vec(x') but it currently (July 10, 2018) hits a bug in
+        # LinearAlgebra
+        τk = LinearAlgebra.reflector!(vec(transpose(view(AS, k, (k+1):n)')))
+        τ[k] = τk'
+
+        for j = (k+1):n
+            tmp = AS[k+1, j]
+            for i = (k+2):j
+                tmp += AS[k, i] * AS[i, j]
+            end
+            for i = (j+1):n
+                tmp += AS[k, i] * AS[j, i]'
+            end
+            u[j] = τk' * tmp
+        end
+
+        vcAv = u[k+1]
+        for i = (k+2):n
+            vcAv += u[i] * AS[k, i]'
+        end
+        ξ = real(vcAv * τk)
+
+        for j = (k+1):n
+            ujt = u[j]
+            hjt = j > (k + 1) ? AS[k, j] : one(ujt)
+            ξhjt = ξ * hjt
+            for i = (k+1):(j-1)
+                hit = i > (k + 1) ? AS[k, i] : one(ujt)
+                AS[i, j] -= hit' * ujt + u[i]' * hjt - hit' * ξhjt
+            end
+            AS[j, j] -= 2 * real(hjt' * ujt) - abs2(hjt) * ξ
+        end
+    end
+    GenericLinearAlgebra.SymmetricTridiagonalFactorization(
+        'U',
+        AS,
+        τ,
+        SymTridiagonal(real(diag(AS)), real(diag(AS, 1))),
+    )
+end
