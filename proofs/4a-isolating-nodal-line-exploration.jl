@@ -8,8 +8,15 @@ using InteractiveUtils
 using Revise
 
 # ╔═╡ 3d88a638-6bb7-11eb-097c-c38d8e633876
-using ArbTools, JLD,
-    MethodOfParticularSolutions, Nemo, NLsolve, Optim, PaynePolygon, Plots, StaticArrays
+using ArbTools,
+    JLD,
+    MethodOfParticularSolutions,
+    Nemo,
+    NLsolve,
+    Optim,
+    PaynePolygon,
+    Plots,
+    StaticArrays
 
 # ╔═╡ 88875ad6-6bb1-11eb-3a51-9535b2be326c
 md"# Isolating the nodal line - exploration
@@ -50,6 +57,9 @@ md"The first step to prove that the nodal line is isolated is to prove that the 
 
 # ╔═╡ 7c16c964-6bb9-11eb-3d85-55b7a29c6c91
 md"The line is then extended by symmetry"
+
+# ╔═╡ ec6860ee-6c7f-11eb-2c1c-419c45309b51
+md"We also plot only the domain and the loop and save that to `\"../figures/gamma.pdf\"`. **TODO:** Improve this plot."
 
 # ╔═╡ 84b13d60-6bba-11eb-01f8-318885e2a6d0
 md"Due to the symmetries of the eigenfunction it's enough to prove that it's bounded away from zero on the red part of the loop. Zooming in on that part we get"
@@ -142,6 +152,34 @@ let num_points = 50
     )
 end
 
+# ╔═╡ 00b4ebda-6c80-11eb-2c30-39c1d37d025a
+let
+    pl = PaynePolygon.plot_mesh(27, 11, 6, plot_mesh = false)
+
+    M = i -> [cospi(i / 3) sinpi(i / 3); -sinpi(i / 3) cospi(i / 3)]
+    pts = [M(i) * stop for i = 0:6]
+    plot!(
+        pl,
+        getindex.(pts, 1),
+        getindex.(pts, 2),
+        label = "",
+        color = :black,
+        linewidth = 2,
+    )
+
+    plot!(
+        pl,
+        [start[1], stop[1]],
+        [start[2], stop[2]],
+        label = "",
+        color = :red,
+        linewidth = 2,
+    )
+
+    savefig(pl, "../figures/gamma.pdf")
+    pl
+end
+
 # ╔═╡ c5ebbbd4-6bba-11eb-0808-2b62067bb188
 let num_points = 50
     pl = eigenfunctionheatmap(
@@ -215,7 +253,7 @@ md"We also need a lower bound for $α$, **TODO** use a rigorously computed value
 α = Float64(min(λ - 31.0432, 63.7259 - λ))
 
 # ╔═╡ 38047830-6c44-11eb-1c06-1f3382cf0960
-g = sqrt(2) / π
+g = sqrt(2 * Float64(MethodOfParticularSolutions.area(domain))) / 4π
 
 # ╔═╡ 4c879968-6c44-11eb-322c-53c3226a9d28
 md"We now get the $L^\infty$ bound as"
@@ -228,9 +266,9 @@ md"We can now check if the bound seems to be good enough"
 
 # ╔═╡ 11c74ed0-6c45-11eb-271e-45d7462c814a
 if bound < abs(value)
-    md"It seems like we are good to go!"
+    md"It seems like we are good to go! `bound/abs(value)` = $(bound/abs(value))"
 else
-    md"The bound is to bad!"
+    md"The bound is to bad! `bound/abs(value)` = $(bound/abs(value))"
 end
 
 # ╔═╡ 9b87666e-6c45-11eb-342f-130d021d7c20
@@ -292,6 +330,8 @@ m / n
 # ╟─bb7a793a-6bb8-11eb-25e3-3318fbac0edf
 # ╟─7c16c964-6bb9-11eb-3d85-55b7a29c6c91
 # ╟─85f2257a-6bb9-11eb-2432-010b6e7ebed5
+# ╟─ec6860ee-6c7f-11eb-2c1c-419c45309b51
+# ╟─00b4ebda-6c80-11eb-2c30-39c1d37d025a
 # ╟─84b13d60-6bba-11eb-01f8-318885e2a6d0
 # ╟─c5ebbbd4-6bba-11eb-0808-2b62067bb188
 # ╟─48b55570-6bbb-11eb-3ce9-6702a18d56ed
@@ -304,7 +344,7 @@ m / n
 # ╠═4d6ae718-6c3f-11eb-3dad-e5a50eef4e86
 # ╟─db3999ae-6c3f-11eb-0bbe-e1ff1d1862ba
 # ╠═28abf718-6c40-11eb-2d2c-afe5ce807dd3
-# ╠═b9c346c4-6c55-11eb-23e9-25939f697bd0
+# ╟─b9c346c4-6c55-11eb-23e9-25939f697bd0
 # ╠═dbf1c536-6c55-11eb-3365-cd930ba42cf6
 # ╟─effc8eb6-6c42-11eb-156b-513f9a6ea67b
 # ╠═2917dbc4-6c43-11eb-3edc-d7d8637dca50
