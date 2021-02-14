@@ -5,7 +5,8 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ 5dbb9e30-6c55-11eb-36a3-210e1d52a1b5
-using ArbTools, JLD, MethodOfParticularSolutions, Nemo, NLsolve, PaynePolygon, Plots, StaticArrays
+using ArbTools,
+    JLD, MethodOfParticularSolutions, Nemo, NLsolve, PaynePolygon, Plots, StaticArrays
 
 # ╔═╡ 00ab445c-6c55-11eb-380f-2b64b223938e
 md"# Isolating nodal line - proof
@@ -33,7 +34,7 @@ Define a parameterization of the part of $\Gamma$ where we want to prove that $u
 "
 
 # ╔═╡ 57227a8e-6c56-11eb-3681-eb0a5b4e775d
-p = let distance = domain.parent(load("../data/distance.jld")["distance_dump"])
+p = let distance = domain.parent(load("../data/distance.jld")["distance"])
     y_max = distance * tanpi(domain.parent(1 // 6))
     p(t::arb) = SVector{2,arb}(distance, t * y_max)
     # Hack to get the output of the correct type
@@ -45,14 +46,14 @@ md"Compute an enclosure of the maximum value of `u(p(t), λ)` for `0 ≤ t ≤ 1
 
 # ╔═╡ a9ce8d12-6c57-11eb-0260-9d59be9e0d95
 Γ_max = domain.parent(-1e-4) #enclosemaximum( # TODO
-    #t -> u(p(t), λ),
-    #domain.parent(0),
-    #domain.parent(1),
-    #evaltype = :taylor,
-    #n = length(coefficients(u)) ÷ 2,
-    #rtol = 1e-2,
-    #show_trace = true,
-    #lower_bound = u(p(domain.parent(0)), λ),
+#t -> u(p(t), λ),
+#domain.parent(0),
+#domain.parent(1),
+#evaltype = :taylor,
+#n = length(coefficients(u)) ÷ 2,
+#rtol = 1e-2,
+#show_trace = true,
+#lower_bound = u(p(domain.parent(0)), λ),
 #)
 
 # ╔═╡ 3427b152-6c58-11eb-073d-3b337dbf73a7
@@ -69,7 +70,7 @@ md"The lower bound for $\alpha$ we get by computing the distance between `λ` an
 
 # ╔═╡ 4e61af5e-6d47-11eb-0a67-3d2b788d6aaf
 α = let Λ´ = ArbTools.arb_load_dump(load("../data/cluster.jld")["Λ´_dump"], domain.parent)
-	ArbTools.abs_lbound(Λ´ - λ)
+    ArbTools.abs_lbound(Λ´ - λ)
 end
 
 # ╔═╡ a94e6704-6d47-11eb-1b57-651063d065d2
@@ -89,7 +90,9 @@ md"We non-rigorously find `m` so that we get exactly `Γ_max`. We then take a va
 
 # ╔═╡ 73868f1e-6d49-11eb-399c-3be79f711849
 m_to_beat = let Γ_max = Float64(Γ_max)
-    domain.parent(0.99nlsolve(m -> [Float64(bound_from_max(only(m))) - abs(Γ_max)], [Γ_max]).zero[1])
+    domain.parent(
+        0.99nlsolve(m -> [Float64(bound_from_max(only(m))) - abs(Γ_max)], [Γ_max]).zero[1],
+    )
 end
 
 # ╔═╡ 982fdaa4-6d4a-11eb-393b-514550552df2
@@ -103,81 +106,81 @@ md"Now (assuming the above result is `true`) we are ready to prove that this bou
 
 # ╔═╡ ac61c2a8-6e94-11eb-0a2f-afd10d194562
 begin
-	active_boundaries = findall(!isempty, u.boundary_to_us)
-	@assert length(active_boundaries) == 3
+    active_boundaries = findall(!isempty, u.boundary_to_us)
+    @assert length(active_boundaries) == 3
 end
 
 # ╔═╡ 28bf3b12-6d52-11eb-1e93-893daa638d64
-let 
-	pl = PaynePolygon.plot_mesh(27, 11, 6, plot_mesh = false)
-	for boundary in active_boundaries
-		p(t) = boundary_parameterization(t, domain, boundary)
-		start = Float64.(p(0))
-		stop = Float64.(p(ifelse(boundary ∈ u.even_boundaries, 1//2, 1)))
-		plot!(
-			pl, 
-			[start[1], stop[1]], 
-			[start[2], stop[2]], 
-			color = :red, 
-			linewidth = 3,
-			title = "Boundary to check",
-		)
-	end
-	pl
+let
+    pl = PaynePolygon.plot_mesh(27, 11, 6, plot_mesh = false)
+    for boundary in active_boundaries
+        p(t) = boundary_parameterization(t, domain, boundary)
+        start = Float64.(p(0))
+        stop = Float64.(p(ifelse(boundary ∈ u.even_boundaries, 1 // 2, 1)))
+        plot!(
+            pl,
+            [start[1], stop[1]],
+            [start[2], stop[2]],
+            color = :red,
+            linewidth = 3,
+            title = "Boundary to check",
+        )
+    end
+    pl
 end
 
 # ╔═╡ d699905c-6d52-11eb-2739-d978535b5926
 ok₁, res₁ = let boundary = active_boundaries[1]
-	p(t) = boundary_parameterization(t, domain, boundary)
-	stop = domain.parent(ifelse(boundary ∈ u.even_boundaries, 1//2, 1))
-	PaynePolygon.bounded_by(
-		t -> u(p(t), λ; boundary), 
-		domain.parent(stop), # TODO: Change this
-		domain.parent(stop), 
-		m_to_beat,
-		use_taylor = :true,
-		n = length(coefficients(u)),
-		start_intervals = 8,
-		show_trace = true,
-		show_evaluations = true,
-		return_enclosure = true,
-	)
+    p(t) = boundary_parameterization(t, domain, boundary)
+    stop = domain.parent(ifelse(boundary ∈ u.even_boundaries, 1 // 2, 1))
+    PaynePolygon.bounded_by(
+        t -> u(p(t), λ; boundary),
+        domain.parent(stop), # TODO: Change this
+        domain.parent(stop),
+        m_to_beat,
+        use_taylor = :true,
+        n = length(coefficients(u)),
+        start_intervals = 8,
+        show_trace = true,
+        show_evaluations = true,
+        return_enclosure = true,
+    )
 end
 
 # ╔═╡ 7506c67e-6d53-11eb-0533-832c62ac9929
 ok₂, res₂ = let boundary = active_boundaries[2]
-	p(t) = boundary_parameterization(t, domain, boundary)
-	stop = domain.parent(ifelse(boundary ∈ u.even_boundaries, 1//2, 1))
-	PaynePolygon.bounded_by(
-		t -> u(p(t), λ; boundary), 
-		domain.parent(stop), # TODO: Change this 
-		domain.parent(stop), 
-		m_to_beat,
-		use_taylor = :true,
-		n = length(coefficients(u)),
-		start_intervals = 8,
-		show_trace = true,
-		show_evaluations = true,
-		return_enclosure = true,
-	)
+    p(t) = boundary_parameterization(t, domain, boundary)
+    stop = domain.parent(ifelse(boundary ∈ u.even_boundaries, 1 // 2, 1))
+    PaynePolygon.bounded_by(
+        t -> u(p(t), λ; boundary),
+        domain.parent(stop), # TODO: Change this 
+        domain.parent(stop),
+        m_to_beat,
+        use_taylor = :true,
+        n = length(coefficients(u)),
+        start_intervals = 8,
+        show_trace = true,
+        show_evaluations = true,
+        return_enclosure = true,
+    )
 end
 
 # ╔═╡ 75b1bf02-6d53-11eb-360b-212da19f3faa
 ok₃, res₃ = let boundary = active_boundaries[3]
-	p(t) = boundary_parameterization(t, domain, boundary)
-	stop = domain.parent(ifelse(boundary ∈ u.even_boundaries, 1//2, 1))
-	PaynePolygon.bounded_by(
-		t -> u(p(t), λ; boundary), 
-		domain.parent(stop), # TODO: Change this 
-		domain.parent(stop), 
-		m_to_beat,
-		use_taylor = :true,
-		n = length(coefficients(u)),
-		start_intervals = 8,
-		show_trace = true,
-		show_evaluations = true,
-		return_enclosure = true,
-	)
+    p(t) = boundary_parameterization(t, domain, boundary)
+    stop = domain.parent(ifelse(boundary ∈ u.even_boundaries, 1 // 2, 1))
+    PaynePolygon.bounded_by(
+        t -> u(p(t), λ; boundary),
+        domain.parent(stop), # TODO: Change this 
+        domain.parent(stop),
+        m_to_beat,
+        use_taylor = :true,
+        n = length(coefficients(u)),
+        start_intervals = 8,
+        show_trace = true,
+        show_evaluations = true,
+        return_enclosure = true,
+    )
 end
 
 # ╔═╡ 9393479e-6dcf-11eb-3764-bd54c0d8393e
@@ -203,9 +206,9 @@ For this we just have to evalute `u` on a points inside and compare with the $L^
 
 # ╔═╡ bb0b6fd2-6ec3-11eb-1b94-8f86f0b4710f
 begin
-	point_inside = [domain.parent(1//10), domain.parent(0)]
-	u_on_point_inside = u(point_inside, λ)
-	u_is_positive_inside = u_on_point_inside > L_infinity_bound
+    point_inside = [domain.parent(1 // 10), domain.parent(0)]
+    u_on_point_inside = u(point_inside, λ)
+    u_is_positive_inside = u_on_point_inside > L_infinity_bound
 end
 
 # ╔═╡ 6e2ae6a6-6ec4-11eb-0bd8-9be009a1df4f
@@ -215,9 +218,9 @@ If $u_2$ is negative on $Γ$ and positive on a points inside $\Gamma$ then we ca
 
 # ╔═╡ 9afa04f0-6ec4-11eb-0bd7-f38df201dcaf
 if u_is_negative_on_Γ && u_is_positive_inside
-	md"Success! The nodal line is contained in $\Gamma$! 🎈🎈🎈"
+    md"Success! The nodal line is contained in $\Gamma$! 🎈🎈🎈"
 else
-	md"Could not conclude 😢"
+    md"Could not conclude 😢"
 end
 
 # ╔═╡ 1ae695f6-6e9e-11eb-07dd-ff3d2f5aaecd
@@ -225,19 +228,19 @@ md"Finally we save the data that is used in the paper"
 
 # ╔═╡ 2219744c-6e9e-11eb-0c30-99254c5ecf2a
 let dir = "../data"
-	save(
-		joinpath(dir, "nodal-line.jld"),
-		"Γ_max_dump",
-		ArbTools.arb_dump(Γ_max),
-		"α_dump",
-		ArbTools.arb_dump(α),
-		"L_infinity_bound_dump",
-		ArbTools.arb_dump(L_infinity_bound),
-		"point_inside_dump",
-		ArbTools.arb_dump.(point_inside),
-		"u_on_point_inside_dump",
-		ArbTools.arb_dump(u_on_point_inside),
-	)
+    save(
+        joinpath(dir, "nodal-line.jld"),
+        "Γ_max_dump",
+        ArbTools.arb_dump(Γ_max),
+        "α_dump",
+        ArbTools.arb_dump(α),
+        "L_infinity_bound_dump",
+        ArbTools.arb_dump(L_infinity_bound),
+        "point_inside_dump",
+        ArbTools.arb_dump.(point_inside),
+        "u_on_point_inside_dump",
+        ArbTools.arb_dump(u_on_point_inside),
+    )
 end
 
 # ╔═╡ Cell order:

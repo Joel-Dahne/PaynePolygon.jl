@@ -35,7 +35,9 @@ md"At the moment the code assumes that the eigenfunction is positive at the cent
 @assert u([domain.parent(1e-8), domain.parent(0)], λ) > 0
 
 # ╔═╡ 6eed4472-6bb7-11eb-255e-fb33f7c0f05d
-md"To visualise the nodal line we plot the absolute value of the eigenfunction, zoomed in on the center of the domain. **TODO:** Make a better plot of this."
+md"## Determine $\Gamma$
+
+To visualise the nodal line we plot the absolute value of the eigenfunction, zoomed in on the center of the domain. **TODO:** Make a better plot of this."
 
 # ╔═╡ 76d8e484-6bb7-11eb-0363-457a755ddadc
 pl = let num_points = 50
@@ -220,10 +222,12 @@ end
 md"The value of `distance` will be used in the proof so store it for later use"
 
 # ╔═╡ dbf1c536-6c55-11eb-3365-cd930ba42cf6
-save("../data/distance.jld", "distance_dump", distance)
+save("../data/distance.jld", "distance", distance)
 
 # ╔═╡ effc8eb6-6c42-11eb-156b-513f9a6ea67b
-md"Finally we check if it seems like the $L^\infty$ bound for `u` from Theorem 5.2 in the paper is good enough. We do this by computing an approximation of the bound and compare that with `value`, if the bound is smaller than we are good to go! The first step is to compute approximations of the the norm `n` of `u` and its maximum value on the boundary `m`."
+md"## Check if the bounds seem good enough
+
+Finally we check if it seems like the $L^\infty$ bound for `u` from Theorem 5.2 in the paper is good enough. We do this by computing an approximation of the bound and compare that with `value`, if the bound is smaller than we are good to go! The first step is to compute approximations of the the norm `n` of `u` and its maximum value on the boundary `m`."
 
 # ╔═╡ 2917dbc4-6c43-11eb-3edc-d7d8637dca50
 n, m = let
@@ -247,8 +251,8 @@ md"With this we can compute $\mu$"
 md"We also need a lower bound for $α$, **TODO** use a rigorously computed value, and an upper bound for $g(x)$"
 
 # ╔═╡ c7a71caa-6c43-11eb-39b9-094b2c98efa2
-α = let Λ´ = ArbTools.arb_load_dump(load("../data/cluster.jld")["Λ´"], domain.parent)
-	Float64(ArbTools.abs_lbound(Λ´ - λ))
+α = let Λ´ = ArbTools.arb_load_dump(load("../data/cluster.jld")["Λ´_dump"], domain.parent)
+    Float64(ArbTools.abs_lbound(Λ´ - λ))
 end
 
 # ╔═╡ 38047830-6c44-11eb-1c06-1f3382cf0960

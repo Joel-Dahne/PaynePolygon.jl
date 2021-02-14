@@ -87,9 +87,9 @@ if size(M, 1) > 1000
         ),
     )
 else
-	Q = let A = PaynePolygon.symtri!(LinearAlgebra.copy_oftype(M, Float64x2))
-		GenericLinearAlgebra.eigen!(A).vectors
-	end
+    Q = let A = PaynePolygon.symtri!(LinearAlgebra.copy_oftype(M, Float64x2))
+        GenericLinearAlgebra.eigen!(A).vectors
+    end
 end;
 
 # ╔═╡ 7bb6dfbe-6857-11eb-22d7-cd62481e93bc
