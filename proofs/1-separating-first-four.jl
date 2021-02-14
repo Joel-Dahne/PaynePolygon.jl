@@ -4,9 +4,6 @@
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ 71e52854-6e0d-11eb-1c3e-710a84891021
-using Revise
-
 # ╔═╡ 55b3091a-67cf-11eb-0c5f-7d8286ce7fa7
 using Arblib, GenericLinearAlgebra, JLD, LinearAlgebra, MultiFloats, PaynePolygon, Plots
 
@@ -102,21 +99,17 @@ md"The rest of the procedure is  implemented in `separate_eigenvalues` and when 
 Λ = PaynePolygon.separate_eigenvalues(M, 4; Q)
 
 # ╔═╡ 10f7f10a-6a09-11eb-16e7-d5379bcfd230
-md"Finally we dump the result in a string format so that it can be stored and read in later."
-
-# ╔═╡ 235da402-6a09-11eb-0fcb-4dc3e3b73da6
-Λ_dump = Arblib.dump_string(Λ)
+md"Finally we save the result used later"
 
 # ╔═╡ ab9ac1f6-6c82-11eb-3ea0-7574d2ada4d2
-save("../data/separation-bound.jld", "Λ_dump", Λ_dump)
+save("../data/separation-bound.jld", "Λ_dump", Arblib.dump_string(Λ))
 
 # ╔═╡ Cell order:
 # ╟─c44d75dc-67ce-11eb-21ae-ab7eebdcfc62
-# ╠═71e52854-6e0d-11eb-1c3e-710a84891021
 # ╠═55b3091a-67cf-11eb-0c5f-7d8286ce7fa7
 # ╟─71b5010e-67cf-11eb-023e-f90a779af5ec
 # ╠═a86a8ffe-67cf-11eb-0edb-e9ace2e00785
-# ╠═cafaa066-67cf-11eb-23c4-136652f60d0e
+# ╟─cafaa066-67cf-11eb-23c4-136652f60d0e
 # ╠═dc02b16e-67cf-11eb-3546-73b6892586dd
 # ╠═d636096e-6c81-11eb-118f-797bdad6d403
 # ╟─7007e2b2-67d0-11eb-14d7-955dc1932ff2
@@ -127,7 +120,7 @@ save("../data/separation-bound.jld", "Λ_dump", Λ_dump)
 # ╠═447e50c6-67d1-11eb-2e92-2168b2b7b36f
 # ╟─8dde4d6e-67d1-11eb-237a-f5a30f822c55
 # ╠═da5ee892-67dd-11eb-3e61-ed20b09df492
-# ╠═390b1e9c-67de-11eb-3fc5-a9733e66e0df
+# ╟─390b1e9c-67de-11eb-3fc5-a9733e66e0df
 # ╟─dd74cc60-6c84-11eb-23d9-cb99aecdff47
 # ╟─bf2a356e-6c8a-11eb-25ee-97dccf30de05
 # ╠═a35df8d4-6c87-11eb-0fb6-715d86edc1a7
@@ -136,5 +129,4 @@ save("../data/separation-bound.jld", "Λ_dump", Λ_dump)
 # ╟─7bb6dfbe-6857-11eb-22d7-cd62481e93bc
 # ╠═5c5eab8e-67de-11eb-1d7a-3b6e20d981d3
 # ╟─10f7f10a-6a09-11eb-16e7-d5379bcfd230
-# ╠═235da402-6a09-11eb-0fcb-4dc3e3b73da6
 # ╠═ab9ac1f6-6c82-11eb-3ea0-7574d2ada4d2

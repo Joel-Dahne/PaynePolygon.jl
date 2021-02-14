@@ -4,9 +4,6 @@
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ 5791440e-6bb7-11eb-25da-31e6ec046e15
-using Revise
-
 # ╔═╡ 3d88a638-6bb7-11eb-097c-c38d8e633876
 using ArbTools,
     JLD,
@@ -21,7 +18,7 @@ using ArbTools,
 # ╔═╡ 88875ad6-6bb1-11eb-3a51-9535b2be326c
 md"# Isolating the nodal line - exploration
 
-This notebook contains the first steps to proving that the nodal line is isolated. Non of the computations here are rigorous, instead this notebook is used to setting up the problem and determining good values for the parameters in the proof. The actuall proof is carried out in a different notebook, but uses parameters computed here.
+This notebook contains the first steps to proving that the nodal line is isolated. Non of the computations here are rigorous, instead this notebook is used to setting up the problem and determining good values for the parameters in the proof. The actuall proof is carried out in `4b-isolaing-nodal-line-proof.jl`, but uses parameters computed here.
 "
 
 # ╔═╡ 2bc917de-6bb7-11eb-2c68-037d72cc58da
@@ -68,10 +65,10 @@ md"Due to the symmetries of the eigenfunction it's enough to prove that it's bou
 md"We define a parameterization, $p(t)$, of the line"
 
 # ╔═╡ 86198916-6bbb-11eb-05e7-8b45e98f08a9
-md"We can the plot an approximation of the `u` along the line"
+md"We can the plot an approximation of `u` along the line"
 
 # ╔═╡ 52d22d12-6bca-11eb-1a10-adc4c2523c39
-md"Zooming in closer to `t = 0` we see that it does look like it's positive."
+md"Zooming in closer to `t = 0` we see that it does look like it's negative."
 
 # ╔═╡ 029aa43a-6c3f-11eb-1858-fb78b6eff99d
 md"We want the value of `distance` to be such that we are as far away from zero as possible in the above plot. Since the it's the closest to zero at `(distance, 0)` we can plot the value of `u` along the line `(x, 0)`"
@@ -84,7 +81,7 @@ let
 end
 
 # ╔═╡ db3999ae-6c3f-11eb-0bbe-e1ff1d1862ba
-md"We want to find the **minimum** value for this function. In this case we don't need a rigorous value, any good approximation is fine."
+md"We want to find the minimum value for this function. In this case we don't need a rigorous value, any good approximation is fine."
 
 # ╔═╡ 28abf718-6c40-11eb-2d2c-afe5ce807dd3
 distance, value = let
@@ -223,7 +220,7 @@ end
 md"The value of `distance` will be used in the proof so store it for later use"
 
 # ╔═╡ dbf1c536-6c55-11eb-3365-cd930ba42cf6
-save("../data/distance.jld", "distance", distance)
+save("../data/distance.jld", "distance_dump", distance)
 
 # ╔═╡ effc8eb6-6c42-11eb-156b-513f9a6ea67b
 md"Finally we check if it seems like the $L^\infty$ bound for `u` from Theorem 5.2 in the paper is good enough. We do this by computing an approximation of the bound and compare that with `value`, if the bound is smaller than we are good to go! The first step is to compute approximations of the the norm `n` of `u` and its maximum value on the boundary `m`."
@@ -250,7 +247,9 @@ md"With this we can compute $\mu$"
 md"We also need a lower bound for $α$, **TODO** use a rigorously computed value, and an upper bound for $g(x)$"
 
 # ╔═╡ c7a71caa-6c43-11eb-39b9-094b2c98efa2
-α = Float64(min(λ - 31.0432, 63.7259 - λ))
+α = let Λ´ = ArbTools.arb_load_dump(load("../data/cluster.jld")["Λ´"], domain.parent)
+	Float64(ArbTools.abs_lbound(Λ´ - λ))
+end
 
 # ╔═╡ 38047830-6c44-11eb-1c06-1f3382cf0960
 g = sqrt(2 * Float64(MethodOfParticularSolutions.area(domain))) / 4π
@@ -300,10 +299,10 @@ md"The maximum that we have to get below is thus"
 
 # ╔═╡ 50474f50-6c47-11eb-10f1-6ba469125635
 m_to_beat =
-    nlsolve(m -> [bound_from_max(only(m)) - abs(value)], [m], autodiff = :forward).zero
+    nlsolve(m -> [bound_from_max(only(m)) - abs(value)], [m], autodiff = :forward).zero[1]
 
 # ╔═╡ aadb0f88-6c47-11eb-20f6-f17f79b28a49
-md"Or if we normalise by `n`"
+md"Or, if we normalise by `n`"
 
 # ╔═╡ b69b4270-6c47-11eb-273d-eb5885e83403
 m_to_beat / n
@@ -316,7 +315,6 @@ m / n
 
 # ╔═╡ Cell order:
 # ╟─88875ad6-6bb1-11eb-3a51-9535b2be326c
-# ╠═5791440e-6bb7-11eb-25da-31e6ec046e15
 # ╠═3d88a638-6bb7-11eb-097c-c38d8e633876
 # ╟─2bc917de-6bb7-11eb-2c68-037d72cc58da
 # ╠═37b67078-6bb7-11eb-1254-ddb708863048
@@ -337,11 +335,11 @@ m / n
 # ╟─48b55570-6bbb-11eb-3ce9-6702a18d56ed
 # ╠═50be8ce6-6bbb-11eb-2936-69ebc659316d
 # ╟─86198916-6bbb-11eb-05e7-8b45e98f08a9
-# ╠═a5cace5c-6bbb-11eb-00fc-75c2806143a9
+# ╟─a5cace5c-6bbb-11eb-00fc-75c2806143a9
 # ╟─52d22d12-6bca-11eb-1a10-adc4c2523c39
-# ╠═26108832-6bca-11eb-25fd-5b82e987ea81
+# ╟─26108832-6bca-11eb-25fd-5b82e987ea81
 # ╟─029aa43a-6c3f-11eb-1858-fb78b6eff99d
-# ╠═4d6ae718-6c3f-11eb-3dad-e5a50eef4e86
+# ╟─4d6ae718-6c3f-11eb-3dad-e5a50eef4e86
 # ╟─db3999ae-6c3f-11eb-0bbe-e1ff1d1862ba
 # ╠═28abf718-6c40-11eb-2d2c-afe5ce807dd3
 # ╟─b9c346c4-6c55-11eb-23e9-25939f697bd0
@@ -359,7 +357,7 @@ m / n
 # ╠═11c74ed0-6c45-11eb-271e-45d7462c814a
 # ╟─9b87666e-6c45-11eb-342f-130d021d7c20
 # ╠═ae70b348-6c45-11eb-3429-a18b528a9b8b
-# ╠═cba20082-6c45-11eb-1f9a-0bc6b246edb6
+# ╟─cba20082-6c45-11eb-1f9a-0bc6b246edb6
 # ╟─99be7d3e-6c47-11eb-3ba1-335b85d1a7f3
 # ╠═50474f50-6c47-11eb-10f1-6ba469125635
 # ╟─aadb0f88-6c47-11eb-20f6-f17f79b28a49
