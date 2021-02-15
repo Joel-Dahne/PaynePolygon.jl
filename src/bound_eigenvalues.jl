@@ -266,7 +266,7 @@ function symtriUpper!(
             ξhjt = ξ * hjt
             for i = (k+1):(j-1)
                 hit = i > (k + 1) ? AS[k, i] : one(ujt)
-                AS[i, j] -= u[i]' * hjt + hit' * (ujt - ξhjt)
+                AS[i, j] -= hit' * ujt + u[i]' * hjt - hit' * ξhjt
             end
             AS[j, j] -= 2 * real(hjt' * ujt) - abs2(hjt) * ξ
         end
