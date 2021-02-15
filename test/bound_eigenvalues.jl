@@ -52,3 +52,10 @@ end
 
     @test GenericLinearAlgebra.symtri!(copy(M)) == PaynePolygon.symtri!(copy(M))
 end
+
+@testset "_Array" begin
+    M = PaynePolygon.stiffness_matrix(9, 4, 3)
+    A = PaynePolygon.symtri!(M)
+
+    @test Array(A.Q) == PaynePolygon._Array(A.Q)
+end
