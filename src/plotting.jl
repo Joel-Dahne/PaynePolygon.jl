@@ -293,3 +293,63 @@ function plot_mesh(
 
     return pl
 end
+
+plot_eigenfunction(
+    domain,
+    u,
+    λ,
+    num_xs::Integer = 50,
+    num_ys::Integer = 50;
+    kwargs...
+) = plot_eigenfunction(
+    domain,
+    u, λ, range(-1, 1, length = num_xs), range(-sqrt(3) / 2, sqrt(3) / 2, length = num_ys); kwargs...)
+
+function plot_eigenfunction(
+    domain,
+    u,
+    λ,
+    xs::AbstractVector,
+    ys::AbstractVector;
+    twosided = true,
+    seriescolor = ifelse(twosided, :delta, :viridis)
+)
+    pts = SVector.(domain.parent.(xs'), domain.parent.(ys))
+    res = similar(pts, Float64)
+    let λ = domain.parent(λ)
+        Threads.@threads for i in eachindex(pts)
+            if pts[i] ∈ domain
+                res[i] = u(pts[i], λ)
+            else
+                res[i] = NaN
+            end
+        end
+    end
+
+    if twosided
+        m = maximum(abs, filter(!isnan, res))
+        clims = (-m, m)
+    else
+        clims = (NaN, NaN)
+    end
+    pl = plot(aspect_ratio = true, legend = :none, axis = ([], false); clims)
+
+    heatmap!(pl, xs, ys, res; seriescolor)
+
+    H = sqrt(3) / 2
+    # Boundary of hexagon
+    plot!(pl, [1, 0.5, -0.5, -1, -0.5, 0.5, 1], [0, H, H, 0, -H, -H, 0], color = :black, linewidth = 2)
+
+    # Boundary of interior triangles
+    pts = let N = 27, d = 11, h = 6
+        [d/N -H*2h/3N; (d+h)/N 0; d/N H*2h/3N; d/N -H*2h/3N]'
+    end
+    for i = 0:5
+        # Rotate points by i*π/3
+        M = [cospi(i / 3) sinpi(i / 3); -sinpi(i / 3) cospi(i / 3)]
+        pts_rotated = M * pts
+        plot!(pl, pts_rotated[1, :], pts_rotated[2, :], color = :black, linewidth = 2)
+    end
+
+    return pl
+end
