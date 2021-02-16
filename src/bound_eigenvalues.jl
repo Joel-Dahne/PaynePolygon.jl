@@ -310,20 +310,21 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-function _Array(Q::GenericLinearAlgebra.EigenQ)
+function _Array(Q::GenericLinearAlgebra.EigenQ{T}) where {T}
     Q.uplo == 'U' || throw(ArgumentError("only Q.uplo = 'U' supported."))
 
     n = size(Q, 1)
-    B = Matrix{eltype(Q)}(I, n, n)
+    B = Matrix{T}(I, n, n)
 
-    for k = length(Q.τ):-1:1
-        for j = 1:n
-            b = view(B, :, j)
+    @inbounds for k = length(Q.τ):-1:1
+        Threads.@threads for j = k+1:n
             vb = B[k+1, j]
             for i = (k+2):n
                 vb += Q.factors[k, i] * B[i, j]
             end
+
             τkvb = Q.τ[k]' * vb
+
             B[k+1, j] -= τkvb
             for i = (k+2):n
                 B[i, j] -= Q.factors[k, i]' * τkvb
