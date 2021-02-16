@@ -87,8 +87,14 @@ if size(M, 1) > 1000
         ),
     )
 else
-    Q = let A = PaynePolygon.symtri!(LinearAlgebra.copy_oftype(M, Float64x2))
-        GenericLinearAlgebra.eigen!(A).vectors
+    Q = let
+        A = PaynePolygon.symtri!(LinearAlgebra.copy_oftype(M, Float64x2))
+        B = PaynePolygon._Array(A.Q)
+
+        LinearAlgebra.Eigen(
+            GenericLinearAlgebra.eigQL!(A.diagonals, vectors = B, tol = eps(eltype(B)))...,
+        ).vectors
+        #GenericLinearAlgebra.eigen!(A).vectors
     end
 end;
 
