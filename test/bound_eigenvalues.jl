@@ -50,12 +50,15 @@ end
 @testset "symtri!" begin
     M = PaynePolygon.stiffness_matrix(9, 4, 3)
 
-    @test GenericLinearAlgebra.symtri!(copy(M)) == PaynePolygon.symtri!(copy(M))
+    @test GenericLinearAlgebra.symtri!(copy(M)) ==
+          GenericLinearAlgebra.SymmetricTridiagonalFactorization(
+        PaynePolygon.symtri!(copy(M))...,
+    )
 end
 
 @testset "_Array" begin
     M = PaynePolygon.stiffness_matrix(9, 4, 3)
-    A = PaynePolygon.symtri!(M)
+    A = GenericLinearAlgebra.SymmetricTridiagonalFactorization(PaynePolygon.symtri!(M)...)
 
     @test Array(A.Q) == PaynePolygon._Array(A.Q)
 end

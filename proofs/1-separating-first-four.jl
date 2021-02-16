@@ -14,7 +14,7 @@ This contains the process for separating the first four eigenvalues, correspondi
 "
 
 # ╔═╡ 71b5010e-67cf-11eb-023e-f90a779af5ec
-md"The domain is parametrised by three values `N`, `d` and `h`. The version in the article uses `N, d, h = 27, 11, 6`. To make it less computationally demanding use can use `9, 4, 3` for a demo."
+md"The domain is parametrised by three values `N`, `d` and `h`. The version in the article uses `N, d, h = 27, 11, 6`. To make it less computationally demanding you can use `9, 4, 3` for a demo."
 
 # ╔═╡ a86a8ffe-67cf-11eb-0edb-e9ace2e00785
 N, d, h = 9, 4, 3
@@ -38,17 +38,19 @@ pl_mesh_zoomed = PaynePolygon.plot_mesh(N, d, h, zoom_hole = true)
 md"We save these three figures for inclusion in the paper"
 
 # ╔═╡ 019eb77c-6c82-11eb-1f06-cf9705b47624
-let dir = "../figures/"
-    savefig(pl_domain, dir * "domain.pdf")
-    savefig(pl_mesh, dir * "mesh.pdf")
-    savefig(pl_mesh_zoomed, dir * "mesh-zoomed.pdf")
+let dir = "../figures"
+    savefig(pl_domain, joinpath(dir, "domain.pdf"))
+    savefig(pl_mesh, joinpath(dir, "mesh.pdf"))
+    savefig(pl_mesh_zoomed, joinpath(dir, "mesh-zoomed.pdf"))
 end
 
 # ╔═╡ d17cfb9a-67d0-11eb-2325-35f7de366a98
 md"The eigenvalue problem we want to solve is $Mx = λx$ where $M = B^{-1}A$. Here $A$ is the stiffness matrix and $B$ the mass matrix. The following code computes an enclosure of $M$."
 
 # ╔═╡ 447e50c6-67d1-11eb-2e92-2168b2b7b36f
-M = PaynePolygon.stiffness_matrix(Arb, N, d, h)
+M = setprecision(Arb, 128) do
+    PaynePolygon.stiffness_matrix(Arb, N, d, h)
+end
 
 # ╔═╡ 8dde4d6e-67d1-11eb-237a-f5a30f822c55
 md"We can compute approximations of the first five eigenvalues"
@@ -88,13 +90,18 @@ if size(M, 1) > 1000
     )
 else
     Q = let
-        A = PaynePolygon.symtri!(LinearAlgebra.copy_oftype(M, Float64x2))
+        A = GenericLinearAlgebra.SymmetricTridiagonalFactorization(
+            PaynePolygon.symtri!(LinearAlgebra.copy_oftype(M, Float64x2))...,
+        )
         B = PaynePolygon._Array(A.Q)
 
         LinearAlgebra.Eigen(
-            GenericLinearAlgebra.eigQL!(A.diagonals, vectors = B, tol = eps(eltype(B)))...,
+            GenericLinearAlgebra.eigQL!(
+                A.diagonals,
+                vectors = B,
+                tol = convert(eltype(B), 1e-20),
+            )...,
         ).vectors
-        #GenericLinearAlgebra.eigen!(A).vectors
     end
 end;
 
@@ -102,7 +109,9 @@ end;
 md"The rest of the procedure is  implemented in `separate_eigenvalues` and when the `eltype` of `M` is `Arb` it returns rigorous results. We are guaranteed that `Λ` separates the first four eigenvalues of `M` from the rest."
 
 # ╔═╡ 5c5eab8e-67de-11eb-1d7a-3b6e20d981d3
-Λ = PaynePolygon.separate_eigenvalues(M, 4; Q)
+Λ = setprecision(Arb, 128) do
+    PaynePolygon.separate_eigenvalues(M, 4; Q)
+end
 
 # ╔═╡ 10f7f10a-6a09-11eb-16e7-d5379bcfd230
 md"Finally we save the result used later"
@@ -116,10 +125,10 @@ save("../data/separation-bound.jld", "Λ_dump", Arblib.dump_string(Λ))
 # ╟─71b5010e-67cf-11eb-023e-f90a779af5ec
 # ╠═a86a8ffe-67cf-11eb-0edb-e9ace2e00785
 # ╟─cafaa066-67cf-11eb-23c4-136652f60d0e
-# ╠═dc02b16e-67cf-11eb-3546-73b6892586dd
-# ╠═d636096e-6c81-11eb-118f-797bdad6d403
+# ╟─dc02b16e-67cf-11eb-3546-73b6892586dd
+# ╟─d636096e-6c81-11eb-118f-797bdad6d403
 # ╟─7007e2b2-67d0-11eb-14d7-955dc1932ff2
-# ╠═77b126a4-67d0-11eb-0340-47afc25c445f
+# ╟─77b126a4-67d0-11eb-0340-47afc25c445f
 # ╟─f4785650-6c81-11eb-3845-d7d63013ca2b
 # ╠═019eb77c-6c82-11eb-1f06-cf9705b47624
 # ╟─d17cfb9a-67d0-11eb-2325-35f7de366a98

@@ -192,6 +192,12 @@ Reduce `A` to symmetric tridiagonal form. The code is the same as in
 [GenericLinearAlgebra.jl](https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/)
 but with debug info and parallelized.
 
+Instead of returning a
+`GenericLinearAlgebra.SymmetricTridiagonalFactorization` like the
+original code it returns a tuple with the arguments to give to
+construct such a type. This is a hack to not have to `using
+GenericLinearAlgebra` in this module.
+
 It has the following license
 
 The MIT License (MIT)
@@ -271,20 +277,19 @@ function symtriUpper!(
             AS[j, j] -= 2 * real(hjt' * ujt) - abs2(hjt) * ξ
         end
     end
-    GenericLinearAlgebra.SymmetricTridiagonalFactorization(
-        'U',
-        AS,
-        τ,
-        SymTridiagonal(real(diag(AS)), real(diag(AS, 1))),
-    )
+    ('U', AS, τ, SymTridiagonal(real(diag(AS)), real(diag(AS, 1))))
 end
 
 """
-    _Array!(Q::GenericLinearAlgebra.EigenQ)
+    _Array!(Q)
 
 Compute `Array(Q)` in a more efficient way. The code is similar to
 [GenericLinearAlgebra.jl](https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/)
 but optimized and parallelized.
+
+This is supposed to work on `Q::::GenericLinearAlgebra.EigenQ` but
+since `GenericLinearAlgebra` is not actually loaded we don't enforce
+that.
 
 It has the following license
 
@@ -310,11 +315,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-function _Array(Q::GenericLinearAlgebra.EigenQ{T}) where {T}
+function _Array(Q)
     Q.uplo == 'U' || throw(ArgumentError("only Q.uplo = 'U' supported."))
 
     n = size(Q, 1)
-    B = Matrix{T}(I, n, n)
+    B = Matrix{eltype(Q)}(I, n, n)
 
     @inbounds for k = length(Q.τ):-1:1
         Threads.@threads for j = k+1:n
