@@ -111,7 +111,7 @@ function plot_mesh(
     zoom_hole = false,
     optimize = true,
 )
-    pl = plot(aspect_ratio = true, legend = :none)
+    pl = plot(aspect_ratio = true, legend = :none, axis = ([], false))
 
     if plot_mesh
         num_triangles = N^2
@@ -294,16 +294,15 @@ function plot_mesh(
     return pl
 end
 
-plot_eigenfunction(
-    domain,
-    u,
-    λ,
-    num_xs::Integer = 50,
-    num_ys::Integer = 50;
-    kwargs...
-) = plot_eigenfunction(
-    domain,
-    u, λ, range(-1, 1, length = num_xs), range(-sqrt(3) / 2, sqrt(3) / 2, length = num_ys); kwargs...)
+plot_eigenfunction(domain, u, λ, num_xs::Integer = 50, num_ys::Integer = 50; kwargs...) =
+    plot_eigenfunction(
+        domain,
+        u,
+        λ,
+        range(-1, 1, length = num_xs),
+        range(-sqrt(3) / 2, sqrt(3) / 2, length = num_ys);
+        kwargs...,
+    )
 
 function plot_eigenfunction(
     domain,
@@ -312,7 +311,7 @@ function plot_eigenfunction(
     xs::AbstractVector,
     ys::AbstractVector;
     twosided = true,
-    seriescolor = ifelse(twosided, :delta, :viridis)
+    seriescolor = ifelse(twosided, :delta, :viridis),
 )
     pts = SVector.(domain.parent.(xs'), domain.parent.(ys))
     res = similar(pts, Float64)
@@ -338,7 +337,13 @@ function plot_eigenfunction(
 
     H = sqrt(3) / 2
     # Boundary of hexagon
-    plot!(pl, [1, 0.5, -0.5, -1, -0.5, 0.5, 1], [0, H, H, 0, -H, -H, 0], color = :black, linewidth = 2)
+    plot!(
+        pl,
+        [1, 0.5, -0.5, -1, -0.5, 0.5, 1],
+        [0, H, H, 0, -H, -H, 0],
+        color = :black,
+        linewidth = 2,
+    )
 
     # Boundary of interior triangles
     pts = let N = 27, d = 11, h = 6

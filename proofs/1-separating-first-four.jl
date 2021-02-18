@@ -109,15 +109,29 @@ end;
 md"The rest of the procedure is  implemented in `separate_eigenvalues` and when the `eltype` of `M` is `Arb` it returns rigorous results. We are guaranteed that `Λ` separates the first four eigenvalues of `M` from the rest."
 
 # ╔═╡ 5c5eab8e-67de-11eb-1d7a-3b6e20d981d3
-Λ = setprecision(Arb, 128) do
+λ_h_5_lower = setprecision(Arb, 128) do
     PaynePolygon.separate_eigenvalues(M, 4; Q)
+end
+
+# ╔═╡ 9a794330-712e-11eb-34f9-5fd98af4fcbe
+md"We can now use Theorem 3.1 from the paper to get a lower bound of the fifth eigenvalue for the eigenvalue problem"
+
+# ╔═╡ b80114de-712e-11eb-33c9-4bb0e7f354e8
+λ_5_lower = let C = Arb("0.1893") / N
+    λ_h_5_lower / (1 + C^2 * λ_h_5_lower)
 end
 
 # ╔═╡ 10f7f10a-6a09-11eb-16e7-d5379bcfd230
 md"Finally we save the result used later"
 
 # ╔═╡ ab9ac1f6-6c82-11eb-3ea0-7574d2ada4d2
-save("../data/separation-bound.jld", "Λ_dump", Arblib.dump_string(Λ))
+save(
+    "../data/separation-bound.jld",
+    "λ_h_5_lower_dump",
+    Arblib.dump_string(λ_h_5_lower),
+    "λ_5_lower_dump",
+    Arblib.dump_string(λ_5_lower),
+)
 
 # ╔═╡ Cell order:
 # ╟─c44d75dc-67ce-11eb-21ae-ab7eebdcfc62
@@ -143,5 +157,7 @@ save("../data/separation-bound.jld", "Λ_dump", Arblib.dump_string(Λ))
 # ╠═8737620e-6e07-11eb-3888-7de505b82886
 # ╟─7bb6dfbe-6857-11eb-22d7-cd62481e93bc
 # ╠═5c5eab8e-67de-11eb-1d7a-3b6e20d981d3
+# ╟─9a794330-712e-11eb-34f9-5fd98af4fcbe
+# ╠═b80114de-712e-11eb-33c9-4bb0e7f354e8
 # ╟─10f7f10a-6a09-11eb-16e7-d5379bcfd230
 # ╠═ab9ac1f6-6c82-11eb-3ea0-7574d2ada4d2

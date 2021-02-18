@@ -41,14 +41,16 @@ To visualise the nodal line we plot the absolute value of the eigenfunction, zoo
 
 # ╔═╡ 76d8e484-6bb7-11eb-0363-457a755ddadc
 pl = let num_points = 50
-    eigenfunctionheatmap(
+    pl = PaynePolygon.plot_eigenfunction(
         domain,
         u,
         λ,
         range(-0.5, 0.5, length = num_points),
         range(-0.5, 0.5, length = num_points),
-        absolute_value = true,
     )
+
+    xlims!(pl, -0.5, 0.5)
+    ylims!(pl, -0.5, 0.5)
 end
 
 # ╔═╡ ad5bbcc0-6bb7-11eb-2168-2b7d5e2ea48c
@@ -331,7 +333,7 @@ m / n
 # ╠═37450842-6bb8-11eb-11c2-f51cd780a816
 # ╟─bb7a793a-6bb8-11eb-25e3-3318fbac0edf
 # ╟─7c16c964-6bb9-11eb-3d85-55b7a29c6c91
-# ╠═85f2257a-6bb9-11eb-2432-010b6e7ebed5
+# ╟─85f2257a-6bb9-11eb-2432-010b6e7ebed5
 # ╟─ec6860ee-6c7f-11eb-2c1c-419c45309b51
 # ╟─00b4ebda-6c80-11eb-2c30-39c1d37d025a
 # ╟─84b13d60-6bba-11eb-01f8-318885e2a6d0
