@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.20
+# v0.12.21
 
 using Markdown
 using InteractiveUtils
@@ -122,7 +122,7 @@ md"We can now use Theorem 3.1 from the paper to get a lower bound of the fifth e
 end
 
 # ╔═╡ 10f7f10a-6a09-11eb-16e7-d5379bcfd230
-md"Finally we save the result used later"
+md"Finally we save the results"
 
 # ╔═╡ ab9ac1f6-6c82-11eb-3ea0-7574d2ada4d2
 save(
