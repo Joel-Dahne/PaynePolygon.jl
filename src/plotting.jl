@@ -311,6 +311,7 @@ function plot_eigenfunction(
     xs::AbstractVector,
     ys::AbstractVector;
     twosided = true,
+    highlight_nodal_line = false,
     seriescolor = ifelse(twosided, :delta, :viridis),
 )
     pts = SVector.(domain.parent.(xs'), domain.parent.(ys))
@@ -325,13 +326,26 @@ function plot_eigenfunction(
         end
     end
 
+    if highlight_nodal_line
+        for i in eachindex(pts)
+            res[i] = sign(res[i])
+        end
+    end
+
     if twosided
         m = maximum(abs, filter(!isnan, res))
         clims = (-m, m)
     else
         clims = (NaN, NaN)
     end
-    pl = plot(aspect_ratio = true, legend = :none, axis = ([], false); clims)
+    pl = plot(
+        aspect_ratio = true,
+        legend = :none,
+        xlims = extrema(xs),
+        ylims = extrema(ys),
+        axis = ([], false);
+        clims,
+    )
 
     heatmap!(pl, xs, ys, res; seriescolor)
 
