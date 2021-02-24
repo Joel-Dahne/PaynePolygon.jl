@@ -16,8 +16,11 @@ This contains the process for separating the first four eigenvalues, correspondi
 # ╔═╡ 71b5010e-67cf-11eb-023e-f90a779af5ec
 md"The domain is parametrised by three values `N`, `d` and `h`. The version in the article uses `N, d, h = 27, 11, 6`. To make it less computationally demanding you can use `9, 4, 3` for a demo."
 
+# ╔═╡ 0fab0e74-74fc-11eb-3257-d75a61de832e
+demo = false
+
 # ╔═╡ a86a8ffe-67cf-11eb-0edb-e9ace2e00785
-N, d, h = 9, 4, 3
+N, d, h = ifelse(demo, (9, 4, 3), (27, 11, 6))
 
 # ╔═╡ cafaa066-67cf-11eb-23c4-136652f60d0e
 md"As a first step we can plot the domain both with and without its mesh"
@@ -82,7 +85,7 @@ md"Since this is one of the most performance critical parts of the computations 
 If the matrix `M` is to large we abort instead of starting an extremely long computation here."
 
 # ╔═╡ 8737620e-6e07-11eb-3888-7de505b82886
-if size(M, 1) > 1000
+if demo && size(M, 1) > 1000
     throw(
         ArgumentError(
             "M is too large to compute eigenvalues in a reasonable time - aborting",
@@ -137,6 +140,7 @@ save(
 # ╟─c44d75dc-67ce-11eb-21ae-ab7eebdcfc62
 # ╠═55b3091a-67cf-11eb-0c5f-7d8286ce7fa7
 # ╟─71b5010e-67cf-11eb-023e-f90a779af5ec
+# ╠═0fab0e74-74fc-11eb-3257-d75a61de832e
 # ╠═a86a8ffe-67cf-11eb-0edb-e9ace2e00785
 # ╟─cafaa066-67cf-11eb-23c4-136652f60d0e
 # ╟─dc02b16e-67cf-11eb-3546-73b6892586dd
