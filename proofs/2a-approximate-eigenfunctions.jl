@@ -19,21 +19,21 @@ We compute four eigenfunction $u_1$, $u_2$, $u_3$ and $u_4$, which require diffe
 import MethodOfParticularSolutions: example_domain_goal_v1
 
 # ╔═╡ c2c6e4d2-6a26-11eb-2b0c-31de8f876374
-md"We start by defining the four eigenfunctions we will use. Both $u_1$ and $u_2$ have a six-fold even symmetry, which we get by giving `symmetry_class = 1`. $u_3$ and $u_4$ have similar but slighly different symmetries, which we get with `symmetry_class = 2` and `symmetry_class = 3` respectively. For all eigenfunctions except $u_2$ it's enought with 64 bits of precision, for $u_2$ we need more."
+md"We start by defining the four eigenfunctions we will use. Both $u_1$ and $u_2$ have a six-fold even symmetry, which we get by giving `symmetry_class = 1`. $u_3$ and $u_4$ have similar but slighly different symmetries, which we get with `symmetry_class = 2` and `symmetry_class = 3` respectively. The amount of precision required also differs between the eigenfunctions."
 
 # ╔═╡ 345db9e6-6bac-11eb-1bad-7dd0c26b0449
 begin
 	symmetry_classes = [1, 1, 2, 3]
-	precisions = [64, 256, 128, 128]
+	precisions = [64, 384, 128, 128]
 end
 
 # ╔═╡ 659d4aa0-6b7d-11eb-12b5-f9adc7ba65cb
 domains, us = let N = 27, d = 11, h = 6
     domains_us = [
         example_domain_goal_v1(
-			N, 
-			d, 
-			h, 
+			N,
+			d,
+			h,
 			ArbField(prec),
 			T = Float64;
 			symmetry_class,
@@ -53,7 +53,7 @@ md"We have the following approximations for the eigenvalues"
 md"The number of free coefficients we use is parametrised by `n`, for a given `n` the number of free coefficients used for the eigenfunction `u` will be `n*sum(u.orders)`. The values for `n` that we use are"
 
 # ╔═╡ 5aefc90e-6b80-11eb-06c1-0ff8b3b4647d
-ns = [1, 10, 6, 6]
+ns = [1, 28, 6, 6]
 
 # ╔═╡ ac3c2e10-6b80-11eb-2763-c3b7a7e3d582
 md"And for references we have the following values for `sum(u.orders)`"
@@ -71,10 +71,10 @@ md"So the number of free coefficients for each eigenfunction is"
 md"Another tuning parameter is the number of collocation points on the boundary (also the number of interior points used, but this rarely needs to be adjusted). The number of collocation points is given by a multiple of the number of free coefficients, this multiple is given below"
 
 # ╔═╡ a65da562-7500-11eb-14cd-01a54e77c022
-num_boundary_factor = [3, 8, 8, 8]
+num_boundary_factor = [3, 16, 8, 8]
 
 # ╔═╡ b964656e-6b81-11eb-05f2-79d153d02e39
-md"We are now ready to compute the approximations. We compute the the approximation for each eigenfunction and then an approximate enclosure for the eigenvaleu."
+md"We are now ready to compute the approximations. We compute the the approximation for each eigenfunction and then an approximate enclosure for the eigenvalue."
 
 # ╔═╡ 07b535a0-6b80-11eb-37d2-5f39d69572db
 let i = 1
@@ -173,7 +173,7 @@ let i = 4
 end
 
 # ╔═╡ 17a0a64e-6b87-11eb-38e6-f755f2657de8
-md"To be able to reuse the results later we want to store the computed coefficients. We can use `PaynePolygon.save_eigenfunctions` for saving the required data to a JLD-file."
+md"To be able to reuse the results later we want to store the computed coefficients. We can use `PaynePolygon.save_eigenfunction` for saving the required data to a JLD-file."
 
 # ╔═╡ 2d2342d6-6b98-11eb-2f60-a9b357272958
 for i in eachindex(us)
@@ -188,7 +188,7 @@ end
 # ╔═╡ e5e2103e-6b88-11eb-3aff-61834843c2ad
 md"The eigenfunctions can then be reconstructed at a later time with
 ```julia
-domain, u, λ = PaynePolygon.load_eigenfunctions(\"../data/approximate-eigenfunctions-$i.jld\")
+domain, u, λ = PaynePolygon.load_eigenfunction(\"../data/approximate-eigenfunction-$i.jld\")
 ```
 "
 
