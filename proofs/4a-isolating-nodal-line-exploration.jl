@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.20
+# v0.12.21
 
 using Markdown
 using InteractiveUtils
@@ -18,7 +18,7 @@ using ArbTools,
 # ╔═╡ 88875ad6-6bb1-11eb-3a51-9535b2be326c
 md"# Isolating the nodal line - exploration
 
-This notebook contains the first steps to proving that the nodal line is isolated. Non of the computations here are rigorous, instead this notebook is used to setting up the problem and determining good values for the parameters in the proof. The actuall proof is carried out in `4b-isolaing-nodal-line-proof.jl`, but uses parameters computed here.
+This notebook contains the first steps to proving that the nodal line is isolated. None of the computations here are rigorous, instead this notebook is used to setting up the problem and determining good values for the parameters in the proof. The actuall proof is carried out in the notebook `4b-isolaing-nodal-line-proof.jl`, but uses parameters computed here.
 "
 
 # ╔═╡ 2bc917de-6bb7-11eb-2c68-037d72cc58da
@@ -37,20 +37,18 @@ md"At the moment the code assumes that the eigenfunction is positive at the cent
 # ╔═╡ 6eed4472-6bb7-11eb-255e-fb33f7c0f05d
 md"## Determine $\Gamma$
 
-To visualise the nodal line we plot the absolute value of the eigenfunction, zoomed in on the center of the domain. **TODO:** Make a better plot of this."
+To visualise the nodal line we plot `log(abs(u))*sign(u)`, zoomed in on the center of the domain."
 
 # ╔═╡ 76d8e484-6bb7-11eb-0363-457a755ddadc
-pl = let num_points = 50
-    pl = PaynePolygon.plot_eigenfunction(
+pl = let num_points = 100
+    PaynePolygon.plot_eigenfunction(
         domain,
         u,
         λ,
         range(-0.5, 0.5, length = num_points),
         range(-0.5, 0.5, length = num_points),
+		highlight_nodal_line = true,
     )
-
-    xlims!(pl, -0.5, 0.5)
-    ylims!(pl, -0.5, 0.5)
 end
 
 # ╔═╡ ad5bbcc0-6bb7-11eb-2168-2b7d5e2ea48c
@@ -60,13 +58,13 @@ md"The first step to prove that the nodal line is isolated is to prove that the 
 md"The line is then extended by symmetry"
 
 # ╔═╡ ec6860ee-6c7f-11eb-2c1c-419c45309b51
-md"We also plot only the domain and the loop and save that to `\"../figures/gamma.pdf\"`. **TODO:** Improve this plot."
+md"We also plot only the domain and the loop and save that to `\"../figures/gamma.pdf\"`."
 
 # ╔═╡ 84b13d60-6bba-11eb-01f8-318885e2a6d0
 md"Due to the symmetries of the eigenfunction it's enough to prove that it's bounded away from zero on the red part of the loop. Zooming in on that part we get"
 
 # ╔═╡ 48b55570-6bbb-11eb-3ce9-6702a18d56ed
-md"We define a parameterization, $p(t)$, of the line"
+md"We define a parameterization, `p(t)`, of the line"
 
 # ╔═╡ 86198916-6bbb-11eb-05e7-8b45e98f08a9
 md"We can the plot an approximation of `u` along the line"
@@ -79,9 +77,15 @@ md"We want the value of `distance` to be such that we are as far away from zero 
 
 # ╔═╡ 4d6ae718-6c3f-11eb-3dad-e5a50eef4e86
 let
-    distances = range(0, 11 / 27, length = 1000)
+    distances = range(0, 11 / 27, length = 200)
     s(distance) = SVector(domain.parent(distance), domain.parent(0))
-    plot(distances, d -> Float64(u(s(d), λ)), legend = :none)
+    plot(
+		distances, 
+		d -> Float64(u(s(d), λ)), 
+		legend = :none,
+		xlabel = "x",
+		ylabel = "u(x, 0)",
+	)
 end
 
 # ╔═╡ db3999ae-6c3f-11eb-0bbe-e1ff1d1862ba
@@ -90,7 +94,7 @@ md"We want to find the minimum value for this function. In this case we don't ne
 # ╔═╡ 28abf718-6c40-11eb-2d2c-afe5ce807dd3
 distance, value = let
     f(distance) = Float64(u(SVector(domain.parent(distance), domain.parent(0)), λ))
-    res = optimize(f, 0, 11 / 27)
+    res = optimize(f, 0, 11 / 27, rel_tol = 1e-15, abs_tol = 1e-15)
     res.minimizer, res.minimum
 end
 
@@ -101,37 +105,17 @@ distance
 start, stop = SVector(distance, 0), SVector(distance, tan(π / 6) * distance)
 
 # ╔═╡ bb7a793a-6bb8-11eb-25e3-3318fbac0edf
-let num_points = 50
-    pl = eigenfunctionheatmap(
-        domain,
-        u,
-        λ,
-        range(-0.5, 0.5, length = num_points),
-        range(-0.5, 0.5, length = num_points),
-        absolute_value = true,
-    )
-
-    plot!(
-        pl,
-        [start[1], stop[1]],
-        [start[2], stop[2]],
-        label = "",
-        color = :red,
-        linewidth = 2,
-    )
-end
+plot!(
+    deepcopy(pl),
+    [start[1], stop[1]],
+    [start[2], stop[2]],
+    label = "",
+    color = :red,
+    linewidth = 2,
+)
 
 # ╔═╡ 85f2257a-6bb9-11eb-2432-010b6e7ebed5
-let num_points = 50
-    pl = eigenfunctionheatmap(
-        domain,
-        u,
-        λ,
-        range(-0.5, 0.5, length = num_points),
-        range(-0.5, 0.5, length = num_points),
-        absolute_value = true,
-    )
-
+let pl = deepcopy(pl)
     M = i -> [cospi(i / 3) sinpi(i / 3); -sinpi(i / 3) cospi(i / 3)]
     pts = [M(i) * stop for i = 0:6]
     plot!(
@@ -164,7 +148,8 @@ let
         getindex.(pts, 1),
         getindex.(pts, 2),
         label = "",
-        color = :black,
+        color = :red,
+		linestyle = :dot,
         linewidth = 2,
     )
 
@@ -176,21 +161,19 @@ let
         color = :red,
         linewidth = 2,
     )
+	
+	annotate!(pl, 0, 0.5, "\$\\Gamma\$")
+	annotate!(pl, 0, 0, "\$\\tilde{\\Omega}\$")
 
     savefig(pl, "../figures/gamma.pdf")
     pl
 end
 
 # ╔═╡ c5ebbbd4-6bba-11eb-0808-2b62067bb188
-let num_points = 50
-    pl = eigenfunctionheatmap(
-        domain,
-        u,
-        λ,
-        range(distance - 0.1, distance + 0.1, length = num_points),
-        range(-0.1, stop[2] + 0.1, length = num_points),
-    )
-
+let pl = deepcopy(pl)
+	xlims!(pl, distance - 0.1, distance + 0.1)
+	ylims!(pl, -0.1, stop[2] + 0.1)
+	
     plot!(
         pl,
         [start[1], stop[1]],
@@ -209,14 +192,26 @@ end
 
 # ╔═╡ a5cace5c-6bbb-11eb-00fc-75c2806143a9
 let
-    ts = range(0, 1, length = 1000)
-    plot(ts, t -> Float64(u(p(t), λ)), legend = :none)
+    ts = range(0, 1, length = 200)
+    plot(
+		ts, 
+		t -> Float64(u(p(t), λ)), 
+		legend = :none, 
+		xlabel = "t", 
+		ylabel = "u(p(t))",
+	)
 end
 
 # ╔═╡ 26108832-6bca-11eb-25fd-5b82e987ea81
 let
-    ts = range(0, 0.1, length = 1000)
-    plot(ts, t -> Float64(u(p(t), λ)), legend = :none)
+    ts = range(0, 0.1, length = 200)
+    plot(
+		ts, 
+		t -> Float64(u(p(t), λ)), 
+		legend = :none, 
+		xlabel = "t", 
+		ylabel = "u(p(t))",
+	)
     hline!([0])
 end
 
@@ -229,7 +224,7 @@ save("../data/distance.jld", "distance", distance)
 # ╔═╡ effc8eb6-6c42-11eb-156b-513f9a6ea67b
 md"## Check if the bounds seem good enough
 
-Finally we check if it seems like the $L^\infty$ bound for `u` from Theorem 5.2 in the paper is good enough. We do this by computing an approximation of the bound and compare that with `value`, if the bound is smaller than we are good to go! The first step is to compute approximations of the the norm `n` of `u` and its maximum value on the boundary `m`."
+Finally we check if it seems like the $L^\infty$ bound for `u` from Theorem 5.2 in the paper is good enough. We do this by computing an approximation of the bound and compare that with `value`, if the bound is smaller then we are good to go! The first step is to compute approximations of the the norm `n` of `u` and its maximum value on the boundary `m`. To take into account that `m` is an approximation we multiply with a factor `1.1`."
 
 # ╔═╡ 2917dbc4-6c43-11eb-3edc-d7d8637dca50
 n, m = let
@@ -238,9 +233,9 @@ n, m = let
         u,
         λ,
         store_trace = true,
-        max_numpoints = 32 * length(coefficients(u)),
+        max_numpoints = 16 * length(coefficients(u)),
     )
-    Float64(n), Float64(m)
+    Float64(n), 1.1Float64(m)
 end
 
 # ╔═╡ ef47784a-6c43-11eb-0085-217b07d70666
@@ -250,7 +245,7 @@ md"With this we can compute $\mu$"
 μ = Float64(sqrt(MethodOfParticularSolutions.area(domain))) * m / n
 
 # ╔═╡ af872b10-6c43-11eb-0653-d972ceb73fc9
-md"We also need a lower bound for $α$, **TODO** use a rigorously computed value, and an upper bound for $g(x)$"
+md"We also need a lower bound for $α$ and an upper bound for $g(x)$. For $\alpha$ we compute the distance to the enclosure of the 2-cluster"
 
 # ╔═╡ c7a71caa-6c43-11eb-39b9-094b2c98efa2
 α = let Λ´ = ArbTools.arb_load_dump(load("../data/cluster.jld")["Λ´_dump"], domain.parent)
