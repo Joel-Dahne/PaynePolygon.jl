@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.20
+# v0.12.21
 
 using Markdown
 using InteractiveUtils
@@ -121,10 +121,8 @@ end
 
 # ╔═╡ 4ecb76b8-6f8c-11eb-0de4-3f6ca7d195b8
 A4, points4 = let i = 4
-    A = domains[i].parent(1) # TODO: Fix this
-
-    dist1 = domains[i].parent(0.55)
-    dist2 = domains[i].parent(0.7)
+    dist1 = domains[i].parent(0.53)
+    dist2 = domains[i].parent(0.71)
     θ = domains[i].parent(1 // 2 - 1 // 15)
     dist3 = dist2 / cospi(θ - 1 // 2)
     points = [
@@ -147,8 +145,8 @@ end
 md"In the figures below you see a (crude) approximation of the eigenfunctions with the parts where the norms are lower bounded highlighted, for symmetry reasons we only have to check the parts in red."
 
 # ╔═╡ f2b2c20a-6ed2-11eb-2a48-15fe49e394a2
-let i = 1
-    pl = eigenfunctionheatmap(domains[i], us_float64[i], λs[i])
+pl1 = let i = 1
+    pl = PaynePolygon.plot_eigenfunction(domains[i], us_float64[i], λs[i], 100, 100)
 
     M = j -> [cospi(j / 3) sinpi(j / 3); -sinpi(j / 3) cospi(j / 3)]
     pts = [M(j) * points1[1][2] for j = 0:6]
@@ -157,7 +155,8 @@ let i = 1
         Float64.(getindex.(pts, 1)),
         Float64.(getindex.(pts, 2)),
         label = "",
-        color = :black,
+        color = :red,
+		linestyle = :dot,
         linewidth = 2,
     )
 
@@ -176,8 +175,8 @@ let i = 1
 end
 
 # ╔═╡ eeba9d98-6f73-11eb-207a-9f91cf23bc4a
-let i = 2
-    pl = eigenfunctionheatmap(domains[i], us_float64[i], λs[i])
+pl2 = let i = 2
+    pl = PaynePolygon.plot_eigenfunction(domains[i], us_float64[i], λs[i], 100, 100)
 
     points = Float64[points2[1][1] points2[1][2] (
         points2[1][2] + 2(points2[2][2] - points2[2][1])
@@ -186,7 +185,7 @@ let i = 2
     M = j -> [cospi(j / 3) sinpi(j / 3); -sinpi(j / 3) cospi(j / 3)]
     for j = 0:5
         pts = M(j) * points
-        plot!(pl, pts[1, :], pts[2, :], label = "", color = :black, linewidth = 2)
+        plot!(pl, pts[1, :], pts[2, :], label = "", color = :red, linestyle = :dot, linewidth = 2)
     end
 
     for (start, stop) in points2
@@ -204,8 +203,8 @@ let i = 2
 end
 
 # ╔═╡ f866e5c6-6f88-11eb-1bad-a969825ae54e
-let i = 3
-    pl = eigenfunctionheatmap(domains[i], us_float64[i], λs[i])
+pl3 = let i = 3
+    pl = PaynePolygon.plot_eigenfunction(domains[i], us_float64[i], λs[i], 100, 100)
 
     pts = [points3[1][1] points3[2][1] points3[3][1] points3[1][1]]
     for (a, b) in [(1, 1), (1, -1), (-1, 1), (-1, -1)]
@@ -214,7 +213,8 @@ let i = 3
             a * Float64.(pts[1, :]),
             b * Float64.(pts[2, :]),
             label = "",
-            color = :black,
+            color = :red,
+			linestyle = :dot,
             linewidth = 2,
         )
     end
@@ -234,8 +234,8 @@ let i = 3
 end
 
 # ╔═╡ 2e88aa42-6f8c-11eb-1b6b-f592a9760507
-let i = 4
-    pl = eigenfunctionheatmap(domains[i], us_float64[i], λs[i])
+pl4 = let i = 4
+    pl = PaynePolygon.plot_eigenfunction(domains[i], us_float64[i], λs[i], 100, 100)
 
     pts = Float64[points4[1][1] points4[1][2] (
         points4[1][2] + 2(points4[2][2] - points4[2][1])
@@ -246,7 +246,8 @@ let i = 4
             Float64.(pts[1, :]),
             b * Float64.(pts[2, :]),
             label = "",
-            color = :black,
+            color = :red,
+			linestyle = :dot,
             linewidth = 2,
         )
     end
@@ -265,8 +266,40 @@ let i = 4
     pl
 end
 
+# ╔═╡ 01069b2c-7745-11eb-0a83-a52ca429c58c
+md"We save these figures for inclusion in the paper"
+
+# ╔═╡ 5160c0b2-7744-11eb-0cf8-77f2f45353d8
+savefig(plot(pl1, pl2, pl3, pl4), "../figures/norm-subsets.pdf")
+
+# ╔═╡ 926fcf98-774f-11eb-30f1-d94d9e946f58
+md"Before we can compute the lower bounds for the norm we have to check that the areas of the different parts are small enough for the Faber-Krahn inequality to apply. We do this by computing the area for the circle which has $\lambda = 70$ as it's first eigenvalue and compare this area to the areas of the parts.
+
+We find the radius $r$ of the circle which has $\lambda = 70$ as it's first eigenvalue by computing the first positive zero of $J_0(r\sqrt{\lambda})$. We compute all zeros of this function on the interval $[0, 1/2]$ and check that there is only one such zero, so it's definitely the first one, which gives us $r$.
+"
+
+# ╔═╡ 26132e16-7750-11eb-09d7-a39bb773fd84
+r = let parent = domains[1].parent, λ = domains[1].parent(70)
+	f = r -> MethodOfParticularSolutions.bessel_j(parent(0), r * sqrt(λ))
+	res = isolateroots(f, parent(0), parent(1 // 2), evaltype = :taylor)
+	@assert only(res[2]) == 1
+	setinterval(only(res[1])...)
+end
+
+# ╔═╡ d5ed6e28-7750-11eb-0a83-79c25d91ef7f
+md"We then compute the area of the corresponding circle"
+
+# ╔═╡ db364846-7750-11eb-0d77-431781e91529
+circle_area = domains[1].parent(π) * r^2
+
+# ╔═╡ e650e6a0-7750-11eb-0915-5706ce1d22e8
+md"Finally we check so that all areas are smaller than this and also that all eigenvalues are smaller than this"
+
+# ╔═╡ f67f465c-7750-11eb-01b0-f19d26e940df
+norm_parts_small_enough = all(As .< circle_area)
+
 # ╔═╡ 0ebf9b3c-6f8f-11eb-355b-4d7b4c851c40
-md"Now we compute lower bounds of the absolute value on the parts in red"
+md"Now we compute lower bounds first for the square of the norm and then the actual norm"
 
 # ╔═╡ 9ad82c38-6f8f-11eb-3441-056e38ab7675
 norms2_lower = let
@@ -279,30 +312,17 @@ norms2_lower = let
             v = pts[2] - pts[1]
             p(t) = pts[1] + t .* v
 
-            res_tmp = domains[i].parent(Inf)
-            N = 0
-            evals = Vector{arb}(undef, N + 1)
-            Threads.@threads for j = 0:N
-                evals[j+1] = us[i](p(j / N), λs[i])^2
-            end
-            for e in evals
-                res_tmp = min(res_tmp, e)
-            end
+            res_tmp = -enclosemaximum(
+                t -> -(us[i](p(t), λs[i]))^2,
+                domains[i].parent(0),
+                domains[i].parent(1),
+                evaltype = :taylor,
+                n = length(coefficients(us[i])) ÷ 4,
+				show_trace = true,
+				extended_trace = true,
+                rtol = 1e-1,
+            )
 
-            if true
-                res_tmp =
-                    -enclosemaximum(
-                        t -> -(us[i](p(t), λs[i]))^2,
-                        domains[i].parent(0),
-                        domains[i].parent(1),
-                        evaltype = :taylor,
-                        n = length(coefficients(us[i])) ÷ 2,
-                        rtol = 1e-1,
-                        maxevals = 20,
-                        show_trace = true,
-                    )
-            end
-            @show i res_tmp
             res = min(res, res_tmp)
         end
 
@@ -311,22 +331,19 @@ norms2_lower = let
 
     # Multiply with number of copies of the domain
     norms2 .*= [1, 6, 4, 2]
-    #norms[2:4] .= domains[1].parent(0)
 
     norms2
 end
 
 # ╔═╡ efcd79ce-6f9b-11eb-1caa-933b5a5eaa33
-norms = sqrt.(norms2_lower)
+norms = ifelse(
+	norm_parts_small_enough, 
+	sqrt.(norms2_lower), 
+	[domain.parent(0) for domain in domains],
+)
 
-# ╔═╡ 3bf6a08e-6dd5-11eb-056a-79ed2b8f6bc6
-norms_approx = [
-    MethodOfParticularSolutions.norm(domains[i], us[i], λs[i], numpoints = 100) for
-    i in eachindex(domains)
-]
-
-# ╔═╡ 08fd1908-6f95-11eb-3481-07fe6869b396
-Float64.(norms_approx ./ norms)
+# ╔═╡ d6d20dcc-7745-11eb-1c3e-2141e206d94e
+Float64.(norms)
 
 # ╔═╡ 6147348e-6dd5-11eb-3cc3-6595d4e1fe57
 md"### Upper bound the value on the boundary
@@ -336,8 +353,8 @@ For the boundary we don't need the tightest bound possible. Instead we compute a
 # ╔═╡ 8ca4b5c0-6dd5-11eb-105c-c3a165f91b93
 approx_max = let
     compute_approx_max(domain, u, λ) = begin
-        max_numpoints = length(coefficients(u)) # TODO: Increase this
-        pts, bds = boundary_points(domain, u, length(coefficients(u)), max_numpoints)
+        max_numpoints = 8length(coefficients(u)) # TODO: Increase this
+        pts, bds = boundary_points(domain, u, length(coefficients(u)), max_numpoints, distribution = :chebyshev)
         values = similar(pts, arb)
         Threads.@threads for i in eachindex(pts)
             values[i] = u(pts[i], λ, boundary = bds[i])
@@ -351,8 +368,11 @@ approx_max = let
     [compute_approx_max(domains[i], us[i], λs[i]) for i in eachindex(domains)]
 end
 
+# ╔═╡ c96d833c-7745-11eb-2de2-1ff0cd424797
+Float64.(approx_max)
+
 # ╔═╡ 5dffe32a-6e0c-11eb-0ac2-ff41ca816c6b
-md"Not we prove that they are bounded by twice this approximate value on the boundary. For symmetry reasons we only have to bound them on a small subset of the boundary. **This is not quite what we do, we try to improve the bound until we get one which is smaller than twice the approximate value**."
+md"Not we prove that they are bounded by this approximate value times `1.1` on the boundary. For symmetry reasons we only have to bound them on a small subset of the boundary."
 
 # ╔═╡ bafc2126-6ec8-11eb-0ab4-23f0e59beb12
 active_boundaries = [
@@ -410,11 +430,11 @@ ok₁, res₁ = let i = 1
         p(t) = boundary_parameterization(t, domains[i], boundary)
         ok_tmp, res_tmp = PaynePolygon.bounded_by(
             t -> us[i](p(t), λs[i]; boundary),
-            domains[i].parent(0), # TODO: Change this
+            domains[i].parent(0),
             domains[i].parent(stop),
-            2approx_max[i],
+            1.1approx_max[i],
             use_taylor = :true,
-            n = length(coefficients(us[i])),
+            n = length(coefficients(us[i])) ÷ 8,
             start_intervals = 8,
             show_trace = true,
             show_evaluations = true,
@@ -435,11 +455,11 @@ ok₂, res₂ = let i = 2
         p(t) = boundary_parameterization(t, domains[i], boundary)
         ok_tmp, res_tmp = PaynePolygon.bounded_by(
             t -> us[i](p(t), λs[i]; boundary),
-            domains[i].parent(stop), # TODO: Change this
+            domains[i].parent(0),
             domains[i].parent(stop),
-            2approx_max[i],
+            1.1approx_max[i],
             use_taylor = :true,
-            n = length(coefficients(us[i])),
+            n = length(coefficients(us[i])) ÷ 8,
             start_intervals = 8,
             show_trace = true,
             show_evaluations = true,
@@ -460,11 +480,11 @@ ok₃, res₃ = let i = 3
         p(t) = boundary_parameterization(t, domains[i], boundary)
         ok_tmp, res_tmp = PaynePolygon.bounded_by(
             t -> us[i](p(t), λs[i]; boundary),
-            domains[i].parent(stop),  # TODO: Change this
+            domains[i].parent(0),
             domains[i].parent(stop),
-            2approx_max[i],
+            1.1approx_max[i],
             use_taylor = :true,
-            n = length(coefficients(us[i])),
+            n = length(coefficients(us[i])) ÷ 8,
             start_intervals = 8,
             show_trace = true,
             show_evaluations = true,
@@ -485,11 +505,11 @@ ok₄, res₄ = let i = 4
         p(t) = boundary_parameterization(t, domains[i], boundary)
         ok_tmp, res_tmp = PaynePolygon.bounded_by(
             t -> us[i](p(t), λs[i]; boundary),
-            domains[i].parent(stop),  # TODO: Change this
+            domains[i].parent(0),
             domains[i].parent(stop),
-            2approx_max[i],
+            1.1approx_max[i],
             use_taylor = :true,
-            n = length(coefficients(us[i])),
+            n = length(coefficients(us[i])) ÷ 8,
             start_intervals = 8,
             show_trace = true,
             show_evaluations = true,
@@ -523,9 +543,6 @@ md"Finally we can compute the enclosures!"
     i in eachindex(domains)
 ]
 
-# ╔═╡ ed377550-6f9a-11eb-365f-855367472a3f
-Float64.(μs)
-
 # ╔═╡ ffd288e0-6ec7-11eb-2fa0-058f7b36c70b
 enclosures = [
     begin
@@ -534,9 +551,6 @@ enclosures = [
         setinterval(lower, upper)
     end for i in eachindex(domains)
 ]
-
-# ╔═╡ 301baa02-6f9c-11eb-00f7-af445359b0a0
-Float64.(radius.(enclosures))
 
 # ╔═╡ f598f6a6-6ec8-11eb-24d9-1d5ffd8bb2bd
 md"## Handle the 2-cluster
@@ -557,13 +571,13 @@ md"Let"
 md"We will prove that there has to be at least two eigenvalues in the interval"
 
 # ╔═╡ 02269288-6e39-11eb-0004-bfe8a0065198
-Λ´ = ball(midpoint(Λ), 2radius(Λ))
+Λ´ = ball(midpoint(Λ), 17radius(Λ)/16)
 
 # ╔═╡ 6693a8fa-6e39-11eb-07a8-c9868e805742
 md"If there are not two eigenvalues in this interval then we get as a lower bound for $\alpha$"
 
 # ╔═╡ bace2814-6e39-11eb-1d20-ad0f78c2721f
-α = radius(Λ)
+α = radius(Λ´) - radius(Λ)
 
 # ╔═╡ d43e9932-6e39-11eb-143c-65bbf3f9f84d
 md"For $g(x)$ we have the bound"
@@ -581,36 +595,33 @@ bound₃ = max_values[3] * (1 + g * λs[3] * (1 / (1 - μs[3]) + 1 / α * (1 + �
 bound₄ = max_values[4] * (1 + g * λs[4] * (1 / (1 - μs[4]) + 1 / α * (1 + μs[4]^2 / α^2)))
 
 # ╔═╡ 8b978df0-6e3a-11eb-075e-072925439fe5
-md"We now evaluate both `u[3]` and `u[4]` at the points"
+md"We now evaluate both $u_3$ and $u_4$ at the points"
 
 # ╔═╡ 951e7df4-6e3a-11eb-1c26-798f0b393333
-two_points = [domains[3].parent.([0.5, 0.5]), domains[3].parent.([-0.5, 0.5])]
+p₁, p₂ = domains[3].parent.([0.5, 0.5]), domains[3].parent.([-0.5, 0.5])
 
 # ╔═╡ 530d4704-6e3c-11eb-1103-c3cbe71e81d4
 md"and check that we can definitely determine the signs at them"
 
 # ╔═╡ 668266e6-6e3c-11eb-2b65-699b9eb978f6
 could_determine_sign =
-    abs(us[3](two_points[1], λs[3])) - bound₃ > 0 &&
-    abs(us[3](two_points[2], λs[3])) - bound₃ > 0 &&
-    abs(us[4](two_points[1], λs[3])) - bound₄ > 0 &&
-    abs(us[4](two_points[2], λs[3])) - bound₄ > 0
+    abs(us[3](p₁, λs[3])) - bound₃ > 0 &&
+    abs(us[3](p₂, λs[3])) - bound₃ > 0 &&
+    abs(us[4](p₁, λs[3])) - bound₄ > 0 &&
+    abs(us[4](p₂, λs[3])) - bound₄ > 0
 
 # ╔═╡ e514550a-6e3c-11eb-1724-439eb0841b50
 md"Finally check that $u_3$ has different signs at the two points and that $u_4$ has the same sign"
 
 # ╔═╡ f6c3fb8e-6e3c-11eb-1df7-95194b512b20
 correct_signs =
-    us[3](two_points[1], λs[3]) * us[3](two_points[2], λs[3]) < 0 &&
-    us[4](two_points[1], λs[4]) * us[4](two_points[2], λs[4]) > 0
+    us[3](p₁, λs[3]) * us[3](p₂, λs[3]) < 0 &&
+    us[4](p₁, λs[4]) * us[4](p₂, λs[4]) > 0
 
 # ╔═╡ dd03a248-6e3d-11eb-20b3-71fdf50a05b0
 md"## Conclude
 
 To finish we check that everything actually succeded and so that the first and second eigenvalue do not overlap with $\Lambda'$"
-
-# ╔═╡ c077b344-6f9b-11eb-08c4-abb4033bc203
-enclosures[1], enclosures[2], Λ´, Float64(ArbTools.lbound(Λ´ - λs[2]))
 
 # ╔═╡ cdb55222-6e93-11eb-1cbf-4b9f17d72c2b
 begin
@@ -653,12 +664,12 @@ end
 # ╔═╡ Cell order:
 # ╟─23d68114-6c76-11eb-373e-7b8358f16372
 # ╠═8453cee0-6dd4-11eb-247a-a7ab8e8d7592
-# ╠═b99db082-6dd4-11eb-2819-67e94af4dfe2
+# ╟─b99db082-6dd4-11eb-2819-67e94af4dfe2
 # ╠═4ef6f0ea-6dd4-11eb-094d-ebd29329adc8
 # ╠═27994e42-6f89-11eb-0666-f3ea843f0918
 # ╟─4dfa0770-6ec8-11eb-2b22-e30892995a33
 # ╟─10f2be14-6ed3-11eb-3203-b9bec4174636
-# ╠═23cbf488-6f71-11eb-071b-81096e7a1db9
+# ╟─23cbf488-6f71-11eb-071b-81096e7a1db9
 # ╟─e09c759c-6f73-11eb-3e7f-61b9e84558fa
 # ╟─dfd06906-6f88-11eb-199b-81e3d0e9ae61
 # ╟─4ecb76b8-6f8c-11eb-0de4-3f6ca7d195b8
@@ -668,13 +679,21 @@ end
 # ╟─eeba9d98-6f73-11eb-207a-9f91cf23bc4a
 # ╟─f866e5c6-6f88-11eb-1bad-a969825ae54e
 # ╟─2e88aa42-6f8c-11eb-1b6b-f592a9760507
+# ╟─01069b2c-7745-11eb-0a83-a52ca429c58c
+# ╠═5160c0b2-7744-11eb-0cf8-77f2f45353d8
+# ╟─926fcf98-774f-11eb-30f1-d94d9e946f58
+# ╠═26132e16-7750-11eb-09d7-a39bb773fd84
+# ╟─d5ed6e28-7750-11eb-0a83-79c25d91ef7f
+# ╠═db364846-7750-11eb-0d77-431781e91529
+# ╟─e650e6a0-7750-11eb-0915-5706ce1d22e8
+# ╠═f67f465c-7750-11eb-01b0-f19d26e940df
 # ╟─0ebf9b3c-6f8f-11eb-355b-4d7b4c851c40
 # ╠═9ad82c38-6f8f-11eb-3441-056e38ab7675
 # ╠═efcd79ce-6f9b-11eb-1caa-933b5a5eaa33
-# ╠═3bf6a08e-6dd5-11eb-056a-79ed2b8f6bc6
-# ╠═08fd1908-6f95-11eb-3481-07fe6869b396
+# ╠═d6d20dcc-7745-11eb-1c3e-2141e206d94e
 # ╟─6147348e-6dd5-11eb-3cc3-6595d4e1fe57
 # ╠═8ca4b5c0-6dd5-11eb-105c-c3a165f91b93
+# ╠═c96d833c-7745-11eb-2de2-1ff0cd424797
 # ╟─5dffe32a-6e0c-11eb-0ac2-ff41ca816c6b
 # ╠═bafc2126-6ec8-11eb-0ab4-23f0e59beb12
 # ╟─46c2ca40-6e34-11eb-3560-5f084a97f76f
@@ -689,8 +708,6 @@ end
 # ╠═0193502e-6e37-11eb-0959-0309ab0e8a81
 # ╟─61ce8ef4-6e37-11eb-01fc-1f2c3988c964
 # ╠═d2c27968-6f9a-11eb-1af6-8d408aa330a6
-# ╠═ed377550-6f9a-11eb-365f-855367472a3f
-# ╠═301baa02-6f9c-11eb-00f7-af445359b0a0
 # ╠═ffd288e0-6ec7-11eb-2fa0-058f7b36c70b
 # ╟─f598f6a6-6ec8-11eb-24d9-1d5ffd8bb2bd
 # ╠═d4a649c0-6e38-11eb-1772-657a8c0e5b00
@@ -712,7 +729,6 @@ end
 # ╟─e514550a-6e3c-11eb-1724-439eb0841b50
 # ╠═f6c3fb8e-6e3c-11eb-1df7-95194b512b20
 # ╟─dd03a248-6e3d-11eb-20b3-71fdf50a05b0
-# ╠═c077b344-6f9b-11eb-08c4-abb4033bc203
 # ╠═cdb55222-6e93-11eb-1cbf-4b9f17d72c2b
 # ╟─e38d5874-6e98-11eb-0d2a-95d969e82b42
 # ╠═1a4c99ee-6e99-11eb-170d-4d40faa1a61f
