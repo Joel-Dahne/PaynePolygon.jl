@@ -310,25 +310,30 @@ function plot_eigenfunction(
     λ,
     xs::AbstractVector,
     ys::AbstractVector;
-    twosided = true,
     highlight_nodal_line = false,
+    twosided = true,
     seriescolor = ifelse(twosided, :delta, :viridis),
 )
-    pts = SVector.(domain.parent.(xs'), domain.parent.(ys))
-    res = similar(pts, Float64)
+    res = zeros(length(xs), length(ys))
     let λ = domain.parent(λ)
-        Threads.@threads for i in eachindex(pts)
-            if pts[i] ∈ domain
-                res[i] = u(pts[i], λ)
-            else
-                res[i] = NaN
+        Threads.@threads for i in eachindex(xs)
+            x = domain.parent(xs[i])
+            for j in eachindex(ys)
+                pt = SVector(x, domain.parent(ys[j]))
+                if pt ∈ domain
+                    res[j, i] = u(pt, λ)
+                else
+                    res[j, i] = NaN
+                end
             end
         end
+        GC.gc() # This tends to generate a lot of garbage so manually
+                # to a GC, mainly relevant in Pluto
     end
 
     if highlight_nodal_line
-        for i in eachindex(pts)
-            res[i] = sign(res[i])
+        for i in eachindex(res)
+            res[i] = log(abs(res[i]))*sign(res[i])
         end
     end
 
