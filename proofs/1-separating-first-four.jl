@@ -17,7 +17,7 @@ This contains the process for separating the first four eigenvalues, correspondi
 md"The domain is parametrised by three values `N`, `d` and `h`. The version in the article uses `N, d, h = 27, 11, 6`. To make it less computationally demanding you can use `9, 4, 3` for a demo."
 
 # ╔═╡ 0fab0e74-74fc-11eb-3257-d75a61de832e
-demo = false
+demo = true
 
 # ╔═╡ a86a8ffe-67cf-11eb-0edb-e9ace2e00785
 N, d, h = ifelse(demo, (9, 4, 3), (27, 11, 6))
