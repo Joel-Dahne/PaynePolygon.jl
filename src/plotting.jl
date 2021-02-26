@@ -111,7 +111,7 @@ function plot_mesh(
     zoom_hole = false,
     optimize = true,
 )
-    pl = plot(aspect_ratio = true, legend = :none, axis = ([], false))
+    pl = plot(aspect_ratio = true, axis = ([], false))
 
     if plot_mesh
         num_triangles = N^2
@@ -129,7 +129,7 @@ function plot_mesh(
             end
             xs_lines =
                 [ifelse(y > 0, y / sqrt(3) - 1, -y / sqrt(3) - 1) for y in ys_lines] .* [1, -1]
-            plot!(xs_lines, ys_lines, color = :blue)
+            plot!(xs_lines, ys_lines, color = :blue, label = "")
 
             # Diagonal blue lines
             xs_lines =
@@ -142,8 +142,8 @@ function plot_mesh(
             ys_lines = let ys = [range(0, H, length = N + 1)[2:end]; fill(H, N - 1)]
                 permutedims([ys -reverse(ys)])
             end
-            plot!(xs_lines, ys_lines, color = :blue)
-            plot!(xs_lines, -ys_lines, color = :blue)
+            plot!(xs_lines, ys_lines, color = :blue, label = "")
+            plot!(xs_lines, -ys_lines, color = :blue, label = "")
 
             # Red lines
             filter!(
@@ -189,7 +189,7 @@ function plot_mesh(
                 ys_edges[2, i] = e2[2]
             end
 
-            plot!(pl, xs_edges, ys_edges, color = :red, aspect_ratio = true, legend = :none)
+            plot!(pl, xs_edges, ys_edges, color = :red, label = "")
 
             # Handle interior of holes
             pts = [d/N -H*2h/3N; (d+h)/N 0; d/N H*2h/3N; d/N -H*2h/3N]'
@@ -253,7 +253,7 @@ function plot_mesh(
                 ys_edges,
                 color = colors,
                 aspect_ratio = true,
-                legend = :none,
+                label = "",
             )
         end
     end
@@ -266,7 +266,13 @@ function plot_mesh(
     H = sqrt(3) / 2
     if plot_boundary
         # Boundary of hexagon
-        plot!(pl, [1, 0.5, -0.5, -1, -0.5, 0.5, 1], [0, H, H, 0, -H, -H, 0], c = :black)
+        plot!(
+            pl,
+            [1, 0.5, -0.5, -1, -0.5, 0.5, 1],
+            [0, H, H, 0, -H, -H, 0],
+            c = :black,
+            label = "",
+        )
 
         # Boundary of interior triangles
         pts = [d/N -H*2h/3N; (d+h)/N 0; d/N H*2h/3N; d/N -H*2h/3N]'
@@ -281,14 +287,15 @@ function plot_mesh(
                     pts_rotated[2, :],
                     c = :black,
                     fill = (0, :white),
+                    label = "",
                 )
             else
-                plot!(pl, pts_rotated[1, :], pts_rotated[2, :], c = :black)
+                plot!(pl, pts_rotated[1, :], pts_rotated[2, :], c = :black, label = "")
             end
         end
     end
     if highlight_fundamental
-        plot!(pl, [1, 0.5, 0, 1], [0, H, 0, 0], c = :green)
+        plot!(pl, [1, 0.5, 0, 1], [0, H, 0, 0], c = :green, label = "")
     end
 
     return pl
