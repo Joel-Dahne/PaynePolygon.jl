@@ -27,6 +27,9 @@ There are six files corresponding to different parts of the proof
   shows the procedure for proving that the nodal line is closed. This
   corresponds to section 6 in the paper.
 
+You will likely have to download the files and open them locally in
+your browser.
+
 ## Reproducing the proof
 
 All the html-files mentioned above are generated from
