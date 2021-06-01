@@ -121,14 +121,15 @@ function separate_eigenvalues(
             throw(ArgumentError("M and Q should have the same dimensions"))
     end
 
+    # M as an ArbMatrix
+    M = ArbMatrix(M)
+
     # Convert Q to an ArbMatrix if needed
     if !(Q isa ArbMatrix)
         Q = ArbMatrix(Q)
     end
-    Q_transpose = Arblib.transpose!(similar(Q), Q)
 
-    # M as an ArbMatrix
-    M = ArbMatrix(M)
+    Q_transpose = Arblib.transpose!(similar(M), Q)
 
     # Compute s from Lemma 2.4 in GS-O
     s = let ss = Q_transpose * Q
@@ -143,20 +144,24 @@ function separate_eigenvalues(
         s
     end
 
-    # Compute D
-    MQ = M * Q
-    D = Q_transpose * MQ
+    # Compute the approximately diagonal matrix D and the norms of Mvᵢ
+    D, Mv_norms = let MQ = M * Q
+        Mv_norms = [norm(v) for v in eachcol(MQ)]
+        D = Arblib.mul!(MQ, Q_transpose, MQ)
+        D, Mv_norms
+    end
+
+    M_norm = Arblib.frobenius_norm!(zero(M[1]), M)
 
     # Compute error bounds for D
-    bounds = similar(D)
-
-    # TODO: Check that norm produces rigorous results
-    Mv_norms = [norm(v) for v in eachcol(MQ)]
-    M_norm = Arblib.frobenius_norm!(Arb(), M)
-
-    for i = 1:N
-        for j = 1:N
-            bounds[i, j] = sqrt(3s) * (Mv_norms[i] + Mv_norms[j]) + 4s * M_norm
+    # We don't need Q_transpose after this so we reuse it for storing
+    # bounds, technically we don't have to zero it first.
+    bounds = Arblib.zero!(Q_transpose)
+    let sqrt_3s = sqrt(3s), four_s_M_norm = 4s * M_norm
+        for i = 1:N
+            for j = 1:N
+                bounds[i, j] = sqrt_3s * (Mv_norms[i] + Mv_norms[j]) + four_s_M_norm
+            end
         end
     end
 
