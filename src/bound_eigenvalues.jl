@@ -4,6 +4,11 @@
 Compute a number `Λ` which separates the first `k` eigenvalues of `M`
 from the rest.
 
+The function returns `s, Λ_lower, Λ_upper`, where `s` is the same as
+in Lemma 2.4 in GS-O, `Λ_lower` is an upper bound for the first `k`
+eigenvalues and `Λ_upper` is a lower bound of the remaining
+eigenvalues.
+
 `Q` should contain the (approximate) eigenvectors of `M` as columns,
 or if `nothing` is given then it computes the eigenvectors by first
 converting `M` to `Float64` and then computing the eigenvalues with
@@ -78,7 +83,7 @@ function separate_eigenvalues(
     end
 
     # We want the bound to be as large as possible, so take the upper bound
-    return Λ_upper
+    return s, Λ_lower, Λ_upper
 end
 
 """
@@ -87,7 +92,12 @@ end
 Compute a number `Λ` which separates the first `k` eigenvalues of `M`
 from the rest.
 
-The number is computed in a rigorous way as to guarantee the
+The function returns `s, Λ_lower, Λ_upper`, where `s` is the same as
+in Lemma 2.4 in GS-O, `Λ_lower` is an upper bound for the first `k`
+eigenvalues and `Λ_upper` is a lower bound of the remaining
+eigenvalues.
+
+The numbers are computed in a rigorous way as to guarantee the
 separation.
 
 `Q` should contain the (approximate) eigenvectors of `M` as columns,
@@ -187,7 +197,7 @@ function separate_eigenvalues(
     end
 
     # We want the bound to be as large as possible, so take the upper bound
-    return Λ_upper
+    return s, Λ_lower, Λ_upper
 end
 
 """

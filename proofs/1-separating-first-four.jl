@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.21
+# v0.14.7
 
 using Markdown
 using InteractiveUtils
@@ -13,8 +13,17 @@ md"# Separating the first four eigenvalues
 This contains the process for separating the first four eigenvalues, corresponding to section 3 in the paper.
 "
 
+# ╔═╡ 8ce329d4-b48b-11eb-1c7d-1f6c3e14e91a
+md"Set the precision used in the computations."
+
+# ╔═╡ 42bb750a-b48b-11eb-270a-8937d22533cf
+begin
+    setprecision(BigFloat, 128)
+    setprecision(Arb, 128)
+end
+
 # ╔═╡ 71b5010e-67cf-11eb-023e-f90a779af5ec
-md"The domain is parametrised by three values `N`, `d` and `h`. The version in the article uses `N, d, h = 27, 11, 6`. To make it less computationally demanding you can use `9, 4, 3` for a demo."
+md"The domain is parametrised by three values `N`, `d` and `h`. The version in the article uses `N, d, h = 27, 11, 6`. However these computation require up to 32GB of memory so to make it less memory heavy you can use `9, 4, 3` for a demo."
 
 # ╔═╡ 0fab0e74-74fc-11eb-3257-d75a61de832e
 demo = true
@@ -48,12 +57,10 @@ let dir = "../figures"
 end
 
 # ╔═╡ d17cfb9a-67d0-11eb-2325-35f7de366a98
-md"The eigenvalue problem we want to solve is $Mx = λx$ where $M = B^{-1}A$. Here $A$ is the stiffness matrix and $B$ the mass matrix. The following code computes an enclosure of $M$."
+md"The eigenvalue problem we want to solve is $Mx = λx$ where $M = B^{-1/2}AB^{-1/2}$. Here $A$ is the stiffness matrix and $B$ the mass matrix. Since $A$ is symmetric and $B$ is diagonal we have that $M$ is symmetric. The following code computes an enclosure of $M$."
 
 # ╔═╡ 447e50c6-67d1-11eb-2e92-2168b2b7b36f
-M = setprecision(Arb, 128) do
-    PaynePolygon.stiffness_matrix(Arb, N, d, h)
-end
+M = PaynePolygon.stiffness_matrix(Arb, N, d, h)
 
 # ╔═╡ 8dde4d6e-67d1-11eb-237a-f5a30f822c55
 md"We can compute approximations of the first five eigenvalues"
@@ -65,11 +72,10 @@ eigvals(LinearAlgebra.copy_oftype(M, Float64), 1:5)
 md"We now want to separate the first four eigenvalues from the rest using the method described in the paper. We first compute the $Q$ matrix consisting of the approximate eigenvectors as columns."
 
 # ╔═╡ dd74cc60-6c84-11eb-23d9-cb99aecdff47
-md"Unfortunately we need the eigenvectors to slightly higher that `Float64` precision for the separation to succed in the case when `N, d, h = 27, 11, 6`. To accomplish that we use `Float64x2` from [MultiFloats.jl](https://github.com/dzhang314/MultiFloats.jl) which gives us twice the precision. We then also have to use a generic version of `eigen` because the one implemented in `LinearAlgebra` only supports machine floats, this is implemented in [GenericLinearAlgebra.jl](https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl). This is several times slower than if we could have just used `Float64`.
-"
+md"Unfortunately we need the eigenvectors to slightly higher that `Float64` precision for the separation to succed in the case when `N, d, h = 27, 11, 6`. To accomplish that we use `Float64x2` from [MultiFloats.jl](https://github.com/dzhang314/MultiFloats.jl) which gives us twice the precision. We then also have to use a generic version of `eigen` because the one implemented in `LinearAlgebra` only supports machine floats, this is implemented in [GenericLinearAlgebra.jl](https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl)."
 
 # ╔═╡ bf2a356e-6c8a-11eb-25ee-97dccf30de05
-md"We need two helper methods for converting between `Arb` and `MultiFloat`"
+md"We need two helper methods for converting between `Arb` and `Float64x2`"
 
 # ╔═╡ a35df8d4-6c87-11eb-0fb6-715d86edc1a7
 begin
@@ -80,41 +86,31 @@ begin
 end
 
 # ╔═╡ e5805844-6e06-11eb-1739-ff95933be386
-md"Since this is one of the most performance critical parts of the computations we have worked to speed up the `eigen` version from GenericLinearAlgebra.jl. The most costly part of the computation is conversion to a symmetric tridiagonal matrix, this part we have parallelized and improved slightly in `PaynePolygon.symtri!`, we therefore manually perform this operation first.
-
-If the matrix `M` is to large we abort instead of starting an extremely long computation here."
+md"Since this is one of the more costly parts of the computations we have worked to speed up the `eigen` version from GenericLinearAlgebra.jl. The most costly part of the computation is conversion to a symmetric tridiagonal matrix, this part we have parallelized and improved slightly in `PaynePolygon.symtri!`, we therefore manually perform this operation first."
 
 # ╔═╡ 8737620e-6e07-11eb-3888-7de505b82886
-if demo && size(M, 1) > 1000
-    throw(
-        ArgumentError(
-            "M is too large to compute eigenvalues in a reasonable time - aborting",
-        ),
+Q = let
+    A = GenericLinearAlgebra.SymmetricTridiagonalFactorization(
+        PaynePolygon.symtri!(LinearAlgebra.copy_oftype(M, Float64x2))...,
     )
-else
-    Q = let
-        A = GenericLinearAlgebra.SymmetricTridiagonalFactorization(
-            PaynePolygon.symtri!(LinearAlgebra.copy_oftype(M, Float64x2))...,
-        )
-        B = PaynePolygon._Array(A.Q)
+    B = PaynePolygon._Array(A.Q)
 
+    ArbMatrix(
         LinearAlgebra.Eigen(
             GenericLinearAlgebra.eigQL!(
                 A.diagonals,
                 vectors = B,
                 tol = convert(eltype(B), 1e-20),
             )...,
-        ).vectors
-    end
+        ).vectors,
+    )
 end;
 
 # ╔═╡ 7bb6dfbe-6857-11eb-22d7-cd62481e93bc
-md"The rest of the procedure is  implemented in `separate_eigenvalues` and when the `eltype` of `M` is `Arb` it returns rigorous results. We are guaranteed that `Λ` separates the first four eigenvalues of `M` from the rest."
+md"The rest of the procedure is  implemented in `separate_eigenvalues` and when the `eltype` of `M` is `Arb` it returns rigorous results. It returns `s, λ_h_4_upper, λ_h_5_lower` where `s` is the $s$ in Lemma 3.2 in the paper, `λ_h_4_upper` is an upper bound of the fourth eigenvalue and `λ_h_5_lower` is a lower bound of the fifth eigenvalue. We are guaranteed that `λ_h_5_lower` separates the first four eigenvalues of `M` from the rest."
 
 # ╔═╡ 5c5eab8e-67de-11eb-1d7a-3b6e20d981d3
-λ_h_5_lower = setprecision(Arb, 128) do
-    PaynePolygon.separate_eigenvalues(M, 4; Q)
-end
+s, λ_h_4_upper, λ_h_5_lower = PaynePolygon.separate_eigenvalues(M, 4; Q)
 
 # ╔═╡ 9a794330-712e-11eb-34f9-5fd98af4fcbe
 md"We can now use Theorem 3.1 from the paper to get a lower bound of the fifth eigenvalue for the eigenvalue problem"
@@ -139,6 +135,8 @@ save(
 # ╔═╡ Cell order:
 # ╟─c44d75dc-67ce-11eb-21ae-ab7eebdcfc62
 # ╠═55b3091a-67cf-11eb-0c5f-7d8286ce7fa7
+# ╟─8ce329d4-b48b-11eb-1c7d-1f6c3e14e91a
+# ╠═42bb750a-b48b-11eb-270a-8937d22533cf
 # ╟─71b5010e-67cf-11eb-023e-f90a779af5ec
 # ╠═0fab0e74-74fc-11eb-3257-d75a61de832e
 # ╠═a86a8ffe-67cf-11eb-0edb-e9ace2e00785
