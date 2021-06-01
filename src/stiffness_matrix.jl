@@ -186,8 +186,14 @@ end
 
 
 """
-    stiffness_matrix(N::Integer = 9, d::Integer = 0, h::Integer = 0; return_hermitian = true)
-    stiffness_matrix(T, N::Integer = 9, d::Integer = 0, h::Integer = 0; return_hermitian = true)
+    stiffness_matrix(
+        [T, ]
+        N::Integer = 9,
+        d::Integer = 0,
+        h::Integer = 0;
+        return_hermitian = true,
+        return_arbmatrix = true,
+    )
 
 Return the stiffness matrix for the triangulation of the problem.
 
@@ -203,6 +209,9 @@ gives no interior domains.
 The result is always hermitian, if `return_hermitian` is true then
 return an explicitly hermitian matrix (of type `Hermitian`), otherwise
 return a normal matrix.
+
+If `T = Arb` and `return_arbmatrix` is true then the matrix is stored
+as `ArbMatrix` instead of `Matrix{Arb}`.
 """
 function stiffness_matrix(
     T::Type{<:Real},
@@ -210,6 +219,7 @@ function stiffness_matrix(
     d::Integer = 0,
     h::Integer = 0;
     return_hermitian = true,
+    return_arbmatrix = true,
 )
     num_triangles = N^2 # Number of triangles in each fundamental domain
     edges = collect(zip(edges_to_triangles(N)...))
@@ -277,12 +287,17 @@ function stiffness_matrix(
         end
     end
 
-    mass_matrix = Diagonal(mass_diagonal)
+    inv_sqrt_mass_matrix = inv(Diagonal(sqrt.(mass_diagonal)))
+    M = inv_sqrt_mass_matrix * stiffness_matrix * inv_sqrt_mass_matrix
+
+    if T == Arb && return_arbmatrix
+        M = ArbMatrix(M)
+    end
 
     if return_hermitian
-        return Hermitian(inv(mass_matrix) * stiffness_matrix)
+        return Hermitian(M)
     else
-        return inv(mass_matrix) * stiffness_matrix
+        return M
     end
 end
 

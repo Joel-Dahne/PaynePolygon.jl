@@ -1,3 +1,5 @@
+import PaynePolygon: stiffness_matrix
+
 @testset "edges_to_triangles" begin
     edge_to_triangle1, edge_to_triangle2 = PaynePolygon.edges_to_triangles(36)
     # Compare to output from Matlab
@@ -15,26 +17,23 @@ end
 end
 
 @testset "stiffness_matrix" begin
-    M = PaynePolygon.stiffness_matrix(36, return_hermitian = false)
-
-    # Check that it's Hermitian
-    @test ishermitian(M)
-
-    # Compare with some values computed from the Matlab code
-    @test sum(M) == 2239488
-    @test sum(!iszero, M) == 57348
-
-    M = PaynePolygon.stiffness_matrix(18, return_hermitian = true)
-    @test M isa Hermitian
+    # Check to that the returned matrix actually is hermitian
+    @test ishermitian(stiffness_matrix(9, return_hermitian = false))
+    @test ishermitian(stiffness_matrix(9, 4, 3, return_hermitian = false))
 
     # Check that it returns correct types
-    @test eltype(PaynePolygon.stiffness_matrix(9)) == Float64
-    @test eltype(PaynePolygon.stiffness_matrix(Float64, 9)) == Float64
-    @test eltype(PaynePolygon.stiffness_matrix(Arb, 9)) == Arb
-    @test eltype(PaynePolygon.stiffness_matrix(9, return_hermitian = false)) == Float64
-    @test eltype(PaynePolygon.stiffness_matrix(Float64, 9, return_hermitian = false)) ==
-          Float64
-    @test eltype(PaynePolygon.stiffness_matrix(Arb, 9, return_hermitian = false)) == Arb
+    @test stiffness_matrix(Float64, 9, return_hermitian = false) isa Matrix{Float64}
+    @test stiffness_matrix(Float64, 9, return_hermitian = true) isa
+          Hermitian{Float64,Matrix{Float64}}
+
+    @test stiffness_matrix(Arb, 9, return_hermitian = false, return_arbmatrix = true) isa
+          ArbMatrix
+    @test stiffness_matrix(Arb, 9, return_hermitian = false, return_arbmatrix = false) isa
+          Matrix{Arb}
+    @test stiffness_matrix(Arb, 9, return_hermitian = true, return_arbmatrix = true) isa
+          Hermitian{Arb,ArbMatrix}
+    @test stiffness_matrix(Arb, 9, return_hermitian = true, return_arbmatrix = false) isa
+          Hermitian{Arb,Matrix{Arb}}
 
     # Check that it runs when d and h are non-zero, doesn't check if
     # the result is correct
@@ -44,6 +43,5 @@ end
     # Check that it gives reasonable results for N = 9, d = 4, h = 3
     # by comparing to precomputed results
     M = PaynePolygon.stiffness_matrix(9, 4, 3)
-    @test eigvals(convert(Hermitian{Float64,Matrix{Float64}}, M), 1:5) ≈
-          [27.016, 67.2163, 67.4369, 92.1418, 92.794] rtol = 1e-5
+    @test eigvals(M, 1:5) ≈ [26.5765, 66.2828, 66.2828, 97.0068, 97.2862] rtol = 1e-5
 end
