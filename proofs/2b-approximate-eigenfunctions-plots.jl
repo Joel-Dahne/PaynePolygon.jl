@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.21
+# v0.14.7
 
 using Markdown
 using InteractiveUtils
@@ -39,8 +39,8 @@ let domain = domains[1]
         pl,
         Float64.(getindex.(vertices(domain.exterior), 1)),
         Float64.(getindex.(vertices(domain.exterior), 2)),
-		label = "First type",
-		legendfontsize = 11,
+        label = "First type",
+        legendfontsize = 11,
         color = :red,
         markersize = 7,
     )
@@ -50,7 +50,7 @@ let domain = domains[1]
         pl,
         Float64.(getindex.(vs, 1)),
         Float64.(getindex.(vs, 2)),
-		label = "Second type",
+        label = "Second type",
         color = :blue,
         markersize = 7,
     )
@@ -60,7 +60,7 @@ let domain = domains[1]
         pl,
         Float64.(getindex.(vs, 1)),
         Float64.(getindex.(vs, 2)),
-		label = "Second type",
+        label = "Second type",
         color = :green,
         markersize = 7,
     )
@@ -69,23 +69,23 @@ let domain = domains[1]
         pl,
         Float64[MethodOfParticularSolutions.center(domain)[1]],
         Float64[MethodOfParticularSolutions.center(domain)[2]],
-		label = "Third type",
+        label = "Third type",
         color = :yellow,
         markersize = 7,
     )
-	
-	# Charges
-	for u in [us[1].us[2].us; us[1].us[3].us]
-		charges = let n = 5
-        	cs = [MethodOfParticularSolutions.charge(u, i, n, true) for i = 1:n]
-        	(Float64.(getindex.(cs, 1)), Float64.(getindex.(cs, 2)))
-    	end
-		scatter!(charges[1], charges[2], label = "", color = :red, markersize = 2)
-	end
-	
-	savefig(pl, "../figures/placement.pdf")
-	
-	pl
+
+    # Charges
+    for u in [us[1].us[2].us; us[1].us[3].us]
+        charges = let n = 5
+            cs = [MethodOfParticularSolutions.charge(u, i, n, true) for i = 1:n]
+            (Float64.(getindex.(cs, 1)), Float64.(getindex.(cs, 2)))
+        end
+        scatter!(charges[1], charges[2], label = "", color = :red, markersize = 2)
+    end
+
+    savefig(pl, "../figures/placement.pdf")
+
+    pl
 end
 
 # ╔═╡ e1c8c5a2-776a-11eb-3a87-97f694a5429a
@@ -138,17 +138,17 @@ md"Finally we make a plot higlighting the nodal line of the second eigenfunction
 
 # ╔═╡ 5b6d92a4-75d9-11eb-312d-25595fb8e8d5
 let i = 2
-	pl = PaynePolygon.plot_eigenfunction(
-		domains[i], 
-		us[i], 
-		λs[i], 
-		N,
-		N,
-		highlight_nodal_line = true, 
-	)
-	
-	savefig(pl, "../figures/nodal-line.pdf")
-	pl
+    pl = PaynePolygon.plot_eigenfunction(
+        domains[i],
+        us[i],
+        λs[i],
+        N,
+        N,
+        highlight_nodal_line = true,
+    )
+
+    savefig(pl, "../figures/nodal-line.pdf")
+    pl
 end
 
 # ╔═╡ Cell order:
