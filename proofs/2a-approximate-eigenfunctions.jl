@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.21
+# v0.14.7
 
 using Markdown
 using InteractiveUtils
@@ -12,7 +12,7 @@ md"# Compute approximate eigenfunctions
 
 This contains the process for computing the approximate eigenfunctions, corresponding to section 4 in the paper. The coefficients for the approximations are then stored and used in later computations.
 
-We compute four eigenfunction $u_1$, $u_2$, $u_3$ and $u_4$, which require different levels of precision. All of them except $u_2$ can be computed to sufficient precision in a time that is reasonable for this type of notebook. For $u_2$ we compute it to lower precision than we in the end will need, the higher precision computations are done outside of this notebook.
+We compute four eigenfunction $u_1$, $u_2$, $u_3$ and $u_4$, which require different levels of precision. For $u_2$ we need much higher precision than for the others and the computations therefore take much longer, several hours compared for minutes for the others.
 "
 
 # ╔═╡ a9c7d5e2-6b7d-11eb-1f70-996bf19341c9
@@ -23,21 +23,14 @@ md"We start by defining the four eigenfunctions we will use. Both $u_1$ and $u_2
 
 # ╔═╡ 345db9e6-6bac-11eb-1bad-7dd0c26b0449
 begin
-	symmetry_classes = [1, 1, 2, 3]
-	precisions = [64, 384, 128, 128]
+    symmetry_classes = [1, 1, 2, 3]
+    precisions = [64, 384, 128, 128]
 end
 
 # ╔═╡ 659d4aa0-6b7d-11eb-12b5-f9adc7ba65cb
 domains, us = let N = 27, d = 11, h = 6
     domains_us = [
-        example_domain_goal_v1(
-			N,
-			d,
-			h,
-			ArbField(prec),
-			T = Float64;
-			symmetry_class,
-			) for (prec, symmetry_class) in zip(precisions, symmetry_classes)
+        example_domain_goal_v1(N, d, h, ArbField(prec), T = Float64; symmetry_class) for (prec, symmetry_class) in zip(precisions, symmetry_classes)
     ]
 
     tuple(zip(domains_us...)...)
@@ -78,16 +71,16 @@ md"We are now ready to compute the approximations. We compute the the approximat
 
 # ╔═╡ 07b535a0-6b80-11eb-37d2-5f39d69572db
 let i = 1
-	setprecision(BigFloat, precision(domains[i].parent)) do
-    	mps!(
-        	us[i],
-        	domains[i],
-        	BigFloat(λs[i]),
-        	BigFloat(λs[i]),
-        	ns[i] * sum(us[i].orders),
-        	num_boundary = num_boundary_factor[i]*ns[i] * sum(us[i].orders),
-    	)
-	end
+    setprecision(BigFloat, precision(domains[i].parent)) do
+        mps!(
+            us[i],
+            domains[i],
+            BigFloat(λs[i]),
+            BigFloat(λs[i]),
+            ns[i] * sum(us[i].orders),
+            num_boundary = num_boundary_factor[i] * ns[i] * sum(us[i].orders),
+        )
+    end
 end
 
 # ╔═╡ f8cdf9c6-6b9d-11eb-3330-898302a734e5
@@ -96,22 +89,22 @@ let i = 1
         domains[i],
         us[i],
         domains[i].parent(λs[i]),
-        max_numpoints = 4num_boundary_factor[i]*ns[i] * sum(us[i].orders),
+        max_numpoints = 4num_boundary_factor[i] * ns[i] * sum(us[i].orders),
     )
 end
 
 # ╔═╡ 954dabb8-6b99-11eb-25c9-550312317b24
 let i = 2
-	setprecision(BigFloat, precision(domains[i].parent)) do
-    	mps!(
-    	    us[i],
-    	    domains[i],
-    	    BigFloat(λs[i]),
-    	    BigFloat(λs[i]),
-    	    ns[i] * sum(us[i].orders),
-    	    num_boundary = num_boundary_factor[i]*ns[i] * sum(us[i].orders),
-    	)
-	end
+    setprecision(BigFloat, precision(domains[i].parent)) do
+        mps!(
+            us[i],
+            domains[i],
+            BigFloat(λs[i]),
+            BigFloat(λs[i]),
+            ns[i] * sum(us[i].orders),
+            num_boundary = num_boundary_factor[i] * ns[i] * sum(us[i].orders),
+        )
+    end
 end
 
 # ╔═╡ 3917ba44-6b9e-11eb-33cb-55aba32d47c7
@@ -120,22 +113,22 @@ let i = 2
         domains[i],
         us[i],
         domains[i].parent(λs[i]),
-        max_numpoints = 4num_boundary_factor[i]*ns[i] * sum(us[i].orders),
+        max_numpoints = 4num_boundary_factor[i] * ns[i] * sum(us[i].orders),
     )
 end
 
 # ╔═╡ 984bcbae-6b99-11eb-23fb-a33308ddfa83
 let i = 3
-	setprecision(BigFloat, precision(domains[i].parent)) do
-    	mps!(
-    	    us[i],
-    	    domains[i],
-    	    BigFloat(λs[i]),
-    	    BigFloat(λs[i]),
-    	    ns[i] * sum(us[i].orders),
-    	    num_boundary = num_boundary_factor[i]*ns[i] * sum(us[i].orders),
-    	)
-	end
+    setprecision(BigFloat, precision(domains[i].parent)) do
+        mps!(
+            us[i],
+            domains[i],
+            BigFloat(λs[i]),
+            BigFloat(λs[i]),
+            ns[i] * sum(us[i].orders),
+            num_boundary = num_boundary_factor[i] * ns[i] * sum(us[i].orders),
+        )
+    end
 end
 
 # ╔═╡ 3be3d776-6b9e-11eb-3ba1-79a7b11659f0
@@ -144,22 +137,22 @@ let i = 3
         domains[i],
         us[i],
         domains[i].parent(λs[i]),
-        max_numpoints = 4num_boundary_factor[i]*ns[i] * sum(us[i].orders),
+        max_numpoints = 4num_boundary_factor[i] * ns[i] * sum(us[i].orders),
     )
 end
 
 # ╔═╡ 9b0f97a0-6b99-11eb-1fdc-31553d6a2bbc
 let i = 4
-	setprecision(BigFloat, precision(domains[i].parent)) do
-    	mps!(
-       		us[i],
-        	domains[i],
-        	BigFloat(λs[i]),
-        	BigFloat(λs[i]),
-        	ns[i] * sum(us[i].orders),
-        	num_boundary = num_boundary_factor[i]*ns[i] * sum(us[i].orders),
-    	)
-	end
+    setprecision(BigFloat, precision(domains[i].parent)) do
+        mps!(
+            us[i],
+            domains[i],
+            BigFloat(λs[i]),
+            BigFloat(λs[i]),
+            ns[i] * sum(us[i].orders),
+            num_boundary = num_boundary_factor[i] * ns[i] * sum(us[i].orders),
+        )
+    end
 end
 
 # ╔═╡ 3fc77686-6b9e-11eb-0ad9-0d7f0000e326
@@ -168,7 +161,7 @@ let i = 4
         domains[i],
         us[i],
         domains[i].parent(λs[i]),
-        max_numpoints = 4num_boundary_factor[i]*ns[i] * sum(us[i].orders),
+        max_numpoints = 4num_boundary_factor[i] * ns[i] * sum(us[i].orders),
     )
 end
 
