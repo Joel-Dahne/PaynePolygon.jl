@@ -247,14 +247,7 @@ function plot_mesh(
                 ys_edges[2, i] = e2[2]
             end
 
-            plot!(
-                pl,
-                xs_edges,
-                ys_edges,
-                color = colors,
-                aspect_ratio = true,
-                label = "",
-            )
+            plot!(pl, xs_edges, ys_edges, color = colors, aspect_ratio = true, label = "")
         end
     end
 
@@ -335,12 +328,12 @@ function plot_eigenfunction(
             end
         end
         GC.gc() # This tends to generate a lot of garbage so manually
-                # to a GC, mainly relevant in Pluto
+        # to a GC, mainly relevant in Pluto
     end
 
     if highlight_nodal_line
         for i in eachindex(res)
-            res[i] = log(abs(res[i]))*sign(res[i])
+            res[i] = log(abs(res[i])) * sign(res[i])
         end
     end
 
