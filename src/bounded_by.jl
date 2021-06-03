@@ -19,7 +19,7 @@ function mince(xₗ::arb, xᵤ::arb, n::Integer; split = false)
     return intervals
 end
 
-mince(x::arb, n::Integer; split = false) = mince(getinterval(x)..., n; split)
+mince(x::arb, n::Integer; split = false) = mince(ArbTools.getinterval(x)..., n; split)
 
 """
     bounded_by(f, a, b, C)
@@ -88,7 +88,7 @@ function bounded_by(
 
         if show_trace
             @printf "%6d %11d %s\n" iterations length(intervals) string(
-                getinterval(max_value),
+                ArbTools.getinterval(max_value),
             )
         end
 

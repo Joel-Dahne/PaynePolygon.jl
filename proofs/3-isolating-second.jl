@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.21
+# v0.14.7
 
 using Markdown
 using InteractiveUtils
@@ -156,7 +156,7 @@ pl1 = let i = 1
         Float64.(getindex.(pts, 2)),
         label = "",
         color = :red,
-		linestyle = :dot,
+        linestyle = :dot,
         linewidth = 2,
     )
 
@@ -185,7 +185,15 @@ pl2 = let i = 2
     M = j -> [cospi(j / 3) sinpi(j / 3); -sinpi(j / 3) cospi(j / 3)]
     for j = 0:5
         pts = M(j) * points
-        plot!(pl, pts[1, :], pts[2, :], label = "", color = :red, linestyle = :dot, linewidth = 2)
+        plot!(
+            pl,
+            pts[1, :],
+            pts[2, :],
+            label = "",
+            color = :red,
+            linestyle = :dot,
+            linewidth = 2,
+        )
     end
 
     for (start, stop) in points2
@@ -214,7 +222,7 @@ pl3 = let i = 3
             b * Float64.(pts[2, :]),
             label = "",
             color = :red,
-			linestyle = :dot,
+            linestyle = :dot,
             linewidth = 2,
         )
     end
@@ -247,7 +255,7 @@ pl4 = let i = 4
             b * Float64.(pts[2, :]),
             label = "",
             color = :red,
-			linestyle = :dot,
+            linestyle = :dot,
             linewidth = 2,
         )
     end
@@ -280,10 +288,10 @@ We find the radius $r$ of the circle which has $\lambda = 70$ as it's first eige
 
 # ╔═╡ 26132e16-7750-11eb-09d7-a39bb773fd84
 r = let parent = domains[1].parent, λ = domains[1].parent(70)
-	f = r -> MethodOfParticularSolutions.bessel_j(parent(0), r * sqrt(λ))
-	res = isolateroots(f, parent(0), parent(1 // 2), evaltype = :taylor)
-	@assert only(res[2]) == 1
-	setinterval(only(res[1])...)
+    f = r -> MethodOfParticularSolutions.bessel_j(parent(0), r * sqrt(λ))
+    res = isolateroots(f, parent(0), parent(1 // 2), evaltype = :taylor)
+    @assert only(res[2]) == 1
+    setinterval(only(res[1])...)
 end
 
 # ╔═╡ d5ed6e28-7750-11eb-0a83-79c25d91ef7f
@@ -312,16 +320,17 @@ norms2_lower = let
             v = pts[2] - pts[1]
             p(t) = pts[1] + t .* v
 
-            res_tmp = -enclosemaximum(
-                t -> -(us[i](p(t), λs[i]))^2,
-                domains[i].parent(0),
-                domains[i].parent(1),
-                evaltype = :taylor,
-                n = length(coefficients(us[i])) ÷ 4,
-				show_trace = true,
-				extended_trace = true,
-                rtol = 1e-1,
-            )
+            res_tmp =
+                -enclosemaximum(
+                    t -> -(us[i](p(t), λs[i]))^2,
+                    domains[i].parent(0),
+                    domains[i].parent(1),
+                    evaltype = :taylor,
+                    n = length(coefficients(us[i])) ÷ 4,
+                    show_trace = true,
+                    extended_trace = true,
+                    rtol = 1e-1,
+                )
 
             res = min(res, res_tmp)
         end
@@ -337,9 +346,9 @@ end
 
 # ╔═╡ efcd79ce-6f9b-11eb-1caa-933b5a5eaa33
 norms = ifelse(
-	norm_parts_small_enough, 
-	sqrt.(norms2_lower), 
-	[domain.parent(0) for domain in domains],
+    norm_parts_small_enough,
+    sqrt.(norms2_lower),
+    [domain.parent(0) for domain in domains],
 )
 
 # ╔═╡ d6d20dcc-7745-11eb-1c3e-2141e206d94e
@@ -354,7 +363,13 @@ For the boundary we don't need the tightest bound possible. Instead we compute a
 approx_max = let
     compute_approx_max(domain, u, λ) = begin
         max_numpoints = 8length(coefficients(u)) # TODO: Increase this
-        pts, bds = boundary_points(domain, u, length(coefficients(u)), max_numpoints, distribution = :chebyshev)
+        pts, bds = boundary_points(
+            domain,
+            u,
+            length(coefficients(u)),
+            max_numpoints,
+            distribution = :chebyshev,
+        )
         values = similar(pts, arb)
         Threads.@threads for i in eachindex(pts)
             values[i] = u(pts[i], λ, boundary = bds[i])
@@ -571,7 +586,7 @@ md"Let"
 md"We will prove that there has to be at least two eigenvalues in the interval"
 
 # ╔═╡ 02269288-6e39-11eb-0004-bfe8a0065198
-Λ´ = ball(midpoint(Λ), 17radius(Λ)/16)
+Λ´ = ball(midpoint(Λ), 17radius(Λ) / 16)
 
 # ╔═╡ 6693a8fa-6e39-11eb-07a8-c9868e805742
 md"If there are not two eigenvalues in this interval then we get as a lower bound for $\alpha$"
@@ -615,8 +630,7 @@ md"Finally check that $u_3$ has different signs at the two points and that $u_4$
 
 # ╔═╡ f6c3fb8e-6e3c-11eb-1df7-95194b512b20
 correct_signs =
-    us[3](p₁, λs[3]) * us[3](p₂, λs[3]) < 0 &&
-    us[4](p₁, λs[4]) * us[4](p₂, λs[4]) > 0
+    us[3](p₁, λs[3]) * us[3](p₂, λs[3]) < 0 && us[4](p₁, λs[4]) * us[4](p₂, λs[4]) > 0
 
 # ╔═╡ dd03a248-6e3d-11eb-20b3-71fdf50a05b0
 md"## Conclude
