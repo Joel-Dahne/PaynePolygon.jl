@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.21
+# v0.14.7
 
 using Markdown
 using InteractiveUtils
@@ -43,13 +43,13 @@ md"Compute an enclosure of the maximum value of $\tilde{u}_2(p(t))$ for $0 \leq 
 
 # ╔═╡ a9ce8d12-6c57-11eb-0260-9d59be9e0d95
 Γ_max = enclosemaximum(
-	t -> u(p(t), λ),
-	domain.parent(0),
-	domain.parent(1),
-	evaltype = :taylor,
-	n = length(coefficients(u)) ÷ 8,
-	rtol = 1e-2,
-	lower_bound = u(p(domain.parent(0)), λ),
+    t -> u(p(t), λ),
+    domain.parent(0),
+    domain.parent(1),
+    evaltype = :taylor,
+    n = length(coefficients(u)) ÷ 8,
+    rtol = 1e-2,
+    lower_bound = u(p(domain.parent(0)), λ),
 )
 
 # ╔═╡ e09ab2fe-7601-11eb-3fc7-6b6afec9a531
@@ -70,11 +70,12 @@ end
 md"Both $\mu$ and the bound on the boundary have been computed in the notebook `3-isolating-second-jl` so we load those values"
 
 # ╔═╡ d723e750-767d-11eb-0bc6-8793264e40d5
-μ, m = let 
-	μs_dump, max_boundary_dump = load("../data/enclosures.jld", "μs_dump", "max_boundary_dump")
-	μ = ArbTools.arb_load_dump(μs_dump[2], domain.parent)
-	m = ArbTools.arb_load_dump(max_boundary_dump[2], domain.parent)
-	μ, m
+μ, m = let
+    μs_dump, max_boundary_dump =
+        load("../data/enclosures.jld", "μs_dump", "max_boundary_dump")
+    μ = ArbTools.arb_load_dump(μs_dump[2], domain.parent)
+    m = ArbTools.arb_load_dump(max_boundary_dump[2], domain.parent)
+    μ, m
 end
 
 # ╔═╡ bfa5c306-767e-11eb-1de3-1b955d68d8cd
