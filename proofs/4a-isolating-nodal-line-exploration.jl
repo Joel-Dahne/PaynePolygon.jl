@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.21
+# v0.14.7
 
 using Markdown
 using InteractiveUtils
@@ -47,7 +47,7 @@ pl = let num_points = 100
         λ,
         range(-0.5, 0.5, length = num_points),
         range(-0.5, 0.5, length = num_points),
-		highlight_nodal_line = true,
+        highlight_nodal_line = true,
     )
 end
 
@@ -80,12 +80,12 @@ let
     distances = range(0, 11 / 27, length = 200)
     s(distance) = SVector(domain.parent(distance), domain.parent(0))
     plot(
-		distances, 
-		d -> Float64(u(s(d), λ)), 
-		legend = :none,
-		xlabel = "x",
-		ylabel = "u(x, 0)",
-	)
+        distances,
+        d -> Float64(u(s(d), λ)),
+        legend = :none,
+        xlabel = "x",
+        ylabel = "u(x, 0)",
+    )
 end
 
 # ╔═╡ db3999ae-6c3f-11eb-0bbe-e1ff1d1862ba
@@ -149,7 +149,7 @@ let
         getindex.(pts, 2),
         label = "",
         color = :red,
-		linestyle = :dot,
+        linestyle = :dot,
         linewidth = 2,
     )
 
@@ -161,9 +161,9 @@ let
         color = :red,
         linewidth = 2,
     )
-	
-	annotate!(pl, 0, 0.5, "\$\\Gamma\$")
-	annotate!(pl, 0, 0, "\$\\tilde{\\Omega}\$")
+
+    annotate!(pl, 0, 0.5, "\$\\Gamma\$")
+    annotate!(pl, 0, 0, "\$\\tilde{\\Omega}\$")
 
     savefig(pl, "../figures/gamma.pdf")
     pl
@@ -171,9 +171,9 @@ end
 
 # ╔═╡ c5ebbbd4-6bba-11eb-0808-2b62067bb188
 let pl = deepcopy(pl)
-	xlims!(pl, distance - 0.1, distance + 0.1)
-	ylims!(pl, -0.1, stop[2] + 0.1)
-	
+    xlims!(pl, distance - 0.1, distance + 0.1)
+    ylims!(pl, -0.1, stop[2] + 0.1)
+
     plot!(
         pl,
         [start[1], stop[1]],
@@ -193,25 +193,13 @@ end
 # ╔═╡ a5cace5c-6bbb-11eb-00fc-75c2806143a9
 let
     ts = range(0, 1, length = 200)
-    plot(
-		ts, 
-		t -> Float64(u(p(t), λ)), 
-		legend = :none, 
-		xlabel = "t", 
-		ylabel = "u(p(t))",
-	)
+    plot(ts, t -> Float64(u(p(t), λ)), legend = :none, xlabel = "t", ylabel = "u(p(t))")
 end
 
 # ╔═╡ 26108832-6bca-11eb-25fd-5b82e987ea81
 let
     ts = range(0, 0.1, length = 200)
-    plot(
-		ts, 
-		t -> Float64(u(p(t), λ)), 
-		legend = :none, 
-		xlabel = "t", 
-		ylabel = "u(p(t))",
-	)
+    plot(ts, t -> Float64(u(p(t), λ)), legend = :none, xlabel = "t", ylabel = "u(p(t))")
     hline!([0])
 end
 
@@ -330,7 +318,7 @@ m / n
 # ╟─7c16c964-6bb9-11eb-3d85-55b7a29c6c91
 # ╟─85f2257a-6bb9-11eb-2432-010b6e7ebed5
 # ╟─ec6860ee-6c7f-11eb-2c1c-419c45309b51
-# ╟─00b4ebda-6c80-11eb-2c30-39c1d37d025a
+# ╠═00b4ebda-6c80-11eb-2c30-39c1d37d025a
 # ╟─84b13d60-6bba-11eb-01f8-318885e2a6d0
 # ╟─c5ebbbd4-6bba-11eb-0808-2b62067bb188
 # ╟─48b55570-6bbb-11eb-3ce9-6702a18d56ed
