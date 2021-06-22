@@ -4,10 +4,11 @@
 
 This repository contains the code for the computer assisted parts of
 the proofs for the paper [A counterexample to Payne's nodal line
-conjecture with few holes](https://arxiv.org/). If you are interested
-in seeing the results of the computations without running anything
-yourself you can look at the html-files in the `proofs` directory.
-There are six files corresponding to different parts of the proof
+conjecture with few holes](https://arxiv.org/abs/2103.02276). If you
+are interested in seeing the results of the computations without
+running anything yourself you can look at the html-files in the
+`proofs` directory. There are six files corresponding to different
+parts of the proof
 
 - [1-separating-first-four](proofs/1-separating-first-four.jl.html)
   shows the procedure for separating the first four eigenvalues from
@@ -37,7 +38,7 @@ All the html-files mentioned above are generated from
 reproduce the proof by running the notebooks yourself as described
 below.
 
-The proofs were run with Julia version 1.5 but should likely work with
+The proofs were run with Julia version 1.6 but should likely work with
 later versions as well. This repository contains the same
 `Manifest.toml` file as was used when running the proofs, this will
 allow us to install exactly the same versions of the packages. To do
@@ -73,9 +74,10 @@ of the six notebooks inside the `proofs` directory through this and it
 should run the proof. Notice that some of these can take several hours
 to complete. The first one,
 [proofs/1-separating-first-four.jl](proofs/1-separating-first-four.jl),
-uses around 25 GB of memory for the full version so here it defaults
-to a smaller demo version. Normally you would have to run the
-notebooks in order since the latter ones depend on data from the
-former ones, however the data is stored in the repository so you
-should be able to run them in any order you like (be careful with
-changing the notebooks and overwriting the data).
+requires up to 32GB of memory for the full version, to run a demo
+version instead you can change a flag in the beginning of the
+notebook.. Normally you would have to run the notebooks in order since
+the latter ones depend on data from the former ones, however the data
+is stored in the repository so you should be able to run them in any
+order you like (be careful with changing the notebooks and overwriting
+the data).
